@@ -4,7 +4,7 @@ services:
     container_name: graduationmemories
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8084:80"
     # If you ever want to serve behind a reverse proxy, you can
     # remove the ports section and attach to the proxy's network instead.
 
