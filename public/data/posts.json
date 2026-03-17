@@ -6,7 +6,16 @@
       "location": "Hermosa, Bataan",
       "quote": "An investment in knowledge pays the best interest.",
       "classPhoto": "/assets/h322x/class-photo.jpg",
-      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0",
+      "gallery": [
+        "/assets/h322x/photos-slide/1.jpg",
+        "/assets/h322x/photos-slide/2.jpg",
+        "/assets/h322x/photos-slide/3.jpg",
+        "/assets/h322x/photos-slide/4.jpg",
+        "/assets/h322x/photos-slide/5.jpg",
+        "/assets/h322x/photos-slide/6.jpg",
+        "/assets/h322x/photos-slide/7.jpg",
+        "/assets/h322x/photos-slide/8.jpg"
+      ],
       "teacherMessage": "To my dear students of Section Malakas, always remember that you have the power to change the world. Carry the lessons we learned in this classroom as you step into your bright futures. I am so proud of you all.",
       "teacherName": "Teacher Cha",
       "teacherPhoto": "/assets/h322x/teacher.jpg",
@@ -46,7 +55,12 @@
       "location": "Hermosa, Bataan",
       "quote": "Education is the passport to the future.",
       "classPhoto": "/assets/33410/class-photo.jpg",
-      "videoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0",
+      "gallery": [
+        "/assets/33410/class-photo.jpg",
+        "/assets/33410/gallery-1.jpg",
+        "/assets/33410/gallery-2.jpg",
+        "/assets/33410/gallery-3.jpg"
+      ],
       "teacherMessage": "Congratulations to all my wonderful students. Your hard work has paid off. Wishing you success in your future endeavors.",
       "teacherName": "Teacher Sample",
       "teacherPhoto": "/assets/33410/teacher.jpg",

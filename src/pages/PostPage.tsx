@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { HeroSection } from '../components/HeroSection';
-import { ClassPhotoCard } from '../components/ClassPhotoCard';
-import { VideoSection } from '../components/VideoSection';
-import { TeacherMessage } from '../components/TeacherMessage';
-import { ClassRegistry } from '../components/ClassRegistry';
-import { Footer } from '../components/Footer';
-import type { Post, Footer as FooterType } from '../types';
+import { useEffect } from "react";
+import { HeroSection } from "../components/HeroSection";
+import { ClassPhotoCard } from "../components/ClassPhotoCard";
+import { ImageSlider } from "../components/ImageSlider";
+import { TeacherMessage } from "../components/TeacherMessage";
+import { ClassRegistry } from "../components/ClassRegistry";
+import { Footer } from "../components/Footer";
+import type { Post, Footer as FooterType } from "../types";
 
 interface PostPageProps {
   post: Post;
@@ -28,7 +28,7 @@ export function PostPage({ post, footer }: PostPageProps) {
           location={post.location}
         />
 
-        <VideoSection videoUrl={post.videoUrl} />
+        <ImageSlider images={post.gallery} />
 
         <TeacherMessage
           message={post.teacherMessage}

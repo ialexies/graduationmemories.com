@@ -9,7 +9,7 @@ export interface Post {
   location: string;
   quote: string;
   classPhoto: string;
-  videoUrl: string;
+  gallery: string[];
   teacherMessage: string;
   teacherName: string;
   teacherPhoto?: string;
