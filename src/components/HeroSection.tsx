@@ -5,7 +5,7 @@ interface HeroSectionProps {
   titleLabel?: string;
 }
 
-export function HeroSection({ sectionName, quote, themeLabel = 'Graduation Souvenir', titleLabel = 'Section' }: HeroSectionProps) {
+export function HeroSection({ sectionName, quote, themeLabel = 'Event Memories', titleLabel = 'Event' }: HeroSectionProps) {
   return (
     <header
       className="pt-12 pb-24 px-6 text-center text-white relative overflow-hidden"

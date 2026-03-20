@@ -7,7 +7,7 @@ interface TeacherAudioPlayerProps {
 
 export function TeacherAudioPlayer({
   src,
-  label = "A message from your teacher",
+  label = "Listen from Host",
 }: TeacherAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasStarted, setHasStarted] = useState(false);
@@ -25,7 +25,7 @@ export function TeacherAudioPlayer({
   return (
     <section
       className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-6"
-      aria-label="Teacher voice recording"
+      aria-label="Host voice recording"
     >
       <div className="flex items-center gap-3">
         <button

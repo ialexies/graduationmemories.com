@@ -21,7 +21,7 @@ const DEFAULT_VISIBILITY = { classPhoto: true, gallery: true, teacherMessage: tr
 
 export function PostPage({ post, footer, labels, sectionVisibility, colorTheme = 'default' }: PostPageProps) {
   const vis = { ...DEFAULT_VISIBILITY, ...sectionVisibility };
-  const themeLabel = labels?.themeLabel ?? 'Graduation Souvenir';
+  const themeLabel = labels?.themeLabel ?? 'Event Memories';
   const themeVars = toCssVars(getThemeColors(colorTheme));
 
   useEffect(() => {

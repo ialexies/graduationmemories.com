@@ -11,7 +11,7 @@ export function TeacherMessage({
   teacherName,
   teacherPhoto,
   teacherTitle,
-  messageLabel = 'Words from your Teacher',
+  messageLabel = 'Message from Host',
 }: TeacherMessageProps) {
   return (
     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 mb-10 relative">

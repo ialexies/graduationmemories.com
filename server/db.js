@@ -231,10 +231,75 @@ const DEFAULT_LABELS = {
     messageLabel: 'Message from Host',
     messageAuthorLabel: 'Host',
   },
+  birthday: {
+    themeLabel: 'Birthday Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Guests',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message from Host',
+    messageAuthorLabel: 'Host',
+  },
+  anniversary: {
+    themeLabel: 'Anniversary Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Guests',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'From the Couple',
+    messageAuthorLabel: 'Couple',
+  },
+  reunion: {
+    themeLabel: 'Reunion Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Attendees',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message from Host',
+    messageAuthorLabel: 'Host',
+  },
+  retirement: {
+    themeLabel: 'Retirement Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Colleagues',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message for Honoree',
+    messageAuthorLabel: 'Honoree',
+  },
+  babyShower: {
+    themeLabel: 'Baby Shower Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Guests',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message from Host',
+    messageAuthorLabel: 'Host',
+  },
+  farewell: {
+    themeLabel: 'Farewell Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Colleagues',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message for Honoree',
+    messageAuthorLabel: 'Honoree',
+  },
+  engagement: {
+    themeLabel: 'Engagement Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Guests',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'From the Couple',
+    messageAuthorLabel: 'Couple',
+  },
 };
 
+export const VALID_PAGE_TYPES = ['graduation', 'wedding', 'event', 'birthday', 'anniversary', 'reunion', 'retirement', 'babyShower', 'farewell', 'engagement'];
+
 export function createPage(pageId, type = 'event') {
-  const validType = ['graduation', 'wedding', 'event'].includes(type) ? type : 'event';
+  const validType = VALID_PAGE_TYPES.includes(type) ? type : 'event';
   db.prepare('INSERT INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(pageId, validType);
   db.prepare(`
     INSERT INTO posts_content (
@@ -292,10 +357,20 @@ export function getPageMeta(pageId) {
 }
 
 export function savePageMeta(pageId, meta) {
-  const page = db.prepare('SELECT id FROM pages WHERE id = ?').get(pageId);
+  const page = db.prepare('SELECT id, type FROM pages WHERE id = ?').get(pageId);
   if (!page) return false;
   if (meta.type) {
+    const typeChanged = page.type !== meta.type;
     db.prepare('UPDATE pages SET type = ? WHERE id = ?').run(meta.type, pageId);
+    // When type changes, clear label overrides so the new type's defaults apply
+    if (typeChanged) {
+      db.prepare(`
+        UPDATE page_labels SET
+          theme_label = NULL, title_label = NULL, subtitle_label = NULL,
+          people_label = NULL, people_tag_label = NULL, message_label = NULL, message_author_label = NULL
+        WHERE page_id = ?
+      `).run(pageId);
+    }
   }
   if (meta.labels && typeof meta.labels === 'object') {
     const l = meta.labels;

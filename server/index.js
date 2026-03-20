@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import sharp from 'sharp';
 import { parseFile } from 'music-metadata';
-import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage } from './db.js';
+import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage, VALID_PAGE_TYPES } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -113,7 +113,7 @@ app.post('/api/admin/pages', requireAdmin, (req, res) => {
     if (exists) {
       return res.status(400).json({ error: 'A page with this ID already exists' });
     }
-    const pageType = ['graduation', 'wedding', 'event'].includes(type) ? type : 'event';
+    const pageType = VALID_PAGE_TYPES.includes(type) ? type : 'event';
     createPage(trimmed, pageType);
     db.prepare('INSERT OR IGNORE INTO page_assignments (user_id, page_id) VALUES (?, ?)').run(req.user.id, trimmed);
     const page = db.prepare('SELECT * FROM pages WHERE id = ?').get(trimmed);
@@ -322,7 +322,8 @@ app.put('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
     if (!pageExists) {
       const hasContent = db.prepare('SELECT 1 FROM posts_content WHERE page_id = ?').get(id);
       if (hasContent) {
-        db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'event');
+        const metaType = VALID_PAGE_TYPES.includes(req.body.type) ? req.body.type : 'event';
+        db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, metaType);
       } else {
         return res.status(404).json({ error: 'Page not found' });
       }

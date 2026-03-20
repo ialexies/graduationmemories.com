@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
+import type { PageType } from '../../types';
 
 interface Page {
   id: string;
@@ -13,8 +14,6 @@ interface Token {
   page_id: string;
   token: string;
 }
-
-type PageType = 'graduation' | 'wedding' | 'event';
 
 function generatePageId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -268,6 +267,13 @@ export function AdminPagesPage() {
                     <option value="event">Event</option>
                     <option value="graduation">Graduation</option>
                     <option value="wedding">Wedding</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="anniversary">Anniversary</option>
+                    <option value="reunion">Reunion</option>
+                    <option value="retirement">Retirement</option>
+                    <option value="babyShower">Baby shower</option>
+                    <option value="farewell">Farewell</option>
+                    <option value="engagement">Engagement</option>
                   </select>
                 </div>
                 {createError && (

@@ -1,10 +1,10 @@
 # CMS User Guide
 
-Guide for admins and editors using the Graduation Memories CMS. The app supports multiple page types (graduation, wedding, event) so you can use it for class memories, wedding souvenirs, reunions, and more.
+Guide for admins and editors using the Graduation Memories CMS. The app supports multiple page types: graduation, wedding, event, birthday, anniversary, reunion, retirement, baby shower, farewell, and engagement.
 
 ## Features
 
-- **Page types** — Graduation, Wedding, or Event (changes labels)
+- **Page types** — Graduation, Wedding, Event, Birthday, Anniversary, Reunion, Retirement, Baby shower, Farewell, Engagement (changes labels)
 - **Color themes** — 50 per-page themes (Default plus Blue, Green, Rose, Navy, Cobalt, Mint, Sage, Coral, Gold, Plum, Lavender, Aqua, Charcoal, Ruby, Jade, Iris, Peach, Lilac, Steel, and more)
 - **Visible sections** — Toggle class photo, gallery, message block, people list
 - **Image upload** — Upload photos directly (no paths to type)
@@ -78,7 +78,7 @@ The footer appears on all class pages.
 1. Go to **Pages**
 2. Click **Create new page**
 3. Enter a **Page ID** (e.g. `batch2026` or `event-march`), or click **Auto-generate** for a random ID
-4. Choose **Page type** (Event, Graduation, or Wedding) — default is Event with general labels
+4. Choose **Page type** (Event, Graduation, Wedding, Birthday, Anniversary, Reunion, Retirement, Baby shower, Farewell, or Engagement) — default is Event with general labels
 5. Click **Create** — the page is created and assigned to you
 6. Create a token in **Tokens** to share the page
 7. Edit content in **Content** to add photos, messages, and guests

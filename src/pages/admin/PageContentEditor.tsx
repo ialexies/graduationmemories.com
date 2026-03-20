@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useParams, Link } from "react-router-dom";
 import { apiFetch } from "../../lib/api";
 import { THEME_OPTIONS, getThemeColors } from "../../lib/themePresets";
 import type {
@@ -18,16 +18,48 @@ const PAGE_TYPE_OPTIONS: { value: PageType; label: string }[] = [
   { value: "graduation", label: "Graduation" },
   { value: "wedding", label: "Wedding" },
   { value: "event", label: "Event" },
+  { value: "birthday", label: "Birthday" },
+  { value: "anniversary", label: "Anniversary" },
+  { value: "reunion", label: "Reunion" },
+  { value: "retirement", label: "Retirement" },
+  { value: "babyShower", label: "Baby shower" },
+  { value: "farewell", label: "Farewell" },
+  { value: "engagement", label: "Engagement" },
 ];
+
+const DEFAULT_LABELS_BY_TYPE: Record<PageType, PageLabels> = {
+  graduation: { themeLabel: 'Graduation Souvenir', titleLabel: 'Section', subtitleLabel: 'Batch', peopleLabel: 'Class Registry', peopleTagLabel: 'Honor', messageLabel: 'Words from your Teacher', messageAuthorLabel: 'Teacher' },
+  wedding: { themeLabel: 'Wedding Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Guests', peopleTagLabel: 'VIP', messageLabel: 'From the Couple', messageAuthorLabel: 'Couple' },
+  event: { themeLabel: 'Event Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Attendees', peopleTagLabel: 'VIP', messageLabel: 'Message from Host', messageAuthorLabel: 'Host' },
+  birthday: { themeLabel: 'Birthday Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Guests', peopleTagLabel: 'VIP', messageLabel: 'Message from Host', messageAuthorLabel: 'Host' },
+  anniversary: { themeLabel: 'Anniversary Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Guests', peopleTagLabel: 'VIP', messageLabel: 'From the Couple', messageAuthorLabel: 'Couple' },
+  reunion: { themeLabel: 'Reunion Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Attendees', peopleTagLabel: 'VIP', messageLabel: 'Message from Host', messageAuthorLabel: 'Host' },
+  retirement: { themeLabel: 'Retirement Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Colleagues', peopleTagLabel: 'VIP', messageLabel: 'Message for Honoree', messageAuthorLabel: 'Honoree' },
+  babyShower: { themeLabel: 'Baby Shower Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Guests', peopleTagLabel: 'VIP', messageLabel: 'Message from Host', messageAuthorLabel: 'Host' },
+  farewell: { themeLabel: 'Farewell Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Colleagues', peopleTagLabel: 'VIP', messageLabel: 'Message for Honoree', messageAuthorLabel: 'Honoree' },
+  engagement: { themeLabel: 'Engagement Memories', titleLabel: 'Event', subtitleLabel: 'Date', peopleLabel: 'Guests', peopleTagLabel: 'VIP', messageLabel: 'From the Couple', messageAuthorLabel: 'Couple' },
+};
 
 const SECTION_OPTIONS: { key: keyof SectionVisibility; label: string }[] = [
   { key: "classPhoto", label: "Class / cover photo" },
   { key: "gallery", label: "Image gallery" },
   { key: "teacherMessage", label: "Message block" },
-  { key: "teacherAudio", label: "Teacher voice recording (MP3)" },
-  { key: "peopleList", label: "People list (students/guests)" },
-  { key: "studentPhotos", label: "Student profile photos" },
+  { key: "teacherAudio", label: "Host voice recording (MP3)" },
+  { key: "peopleList", label: "People list (attendees)" },
+  { key: "studentPhotos", label: "Attendee profile photos" },
 ];
+
+function getSectionLabel(key: keyof SectionVisibility, labels: PageLabels): string {
+  const author = labels?.messageAuthorLabel ?? "Host";
+  const people = labels?.peopleLabel ?? "Attendees";
+  const peopleSingular = people.endsWith("s") ? people.slice(0, -1) : "Person";
+  switch (key) {
+    case "teacherAudio": return `${author} voice recording (MP3)`;
+    case "peopleList": return `People list (${people.toLowerCase()})`;
+    case "studentPhotos": return `${peopleSingular} profile photos`;
+    default: return SECTION_OPTIONS.find((o) => o.key === key)!.label;
+  }
+}
 
 function TrashIcon({ className }: { className?: string }) {
   return (
@@ -238,7 +270,6 @@ function ImageUploadSlot({
 
 export function PageContentEditor() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
   const [pageType, setPageType] = useState<PageType>("event");
   const [labels, setLabels] = useState<PageLabels | null>(null);
@@ -254,6 +285,7 @@ export function PageContentEditor() {
   const [colorTheme, setColorTheme] = useState<string>("default");
   const [showCustomLabels, setShowCustomLabels] = useState(false);
   const [metaSaved, setMetaSaved] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
@@ -266,6 +298,20 @@ export function PageContentEditor() {
   const studentPhotoInputRef = useRef<HTMLInputElement>(null);
   const studentPhotoTargetRef = useRef<number | null>(null);
   const teacherAudioInputRef = useRef<HTMLInputElement>(null);
+
+  const displayLabels = useMemo(() => {
+    const defaults = DEFAULT_LABELS_BY_TYPE[pageType] ?? DEFAULT_LABELS_BY_TYPE.event;
+    if (!labels) return defaults;
+    return {
+      themeLabel: (labels.themeLabel ?? "").trim() || defaults.themeLabel,
+      titleLabel: (labels.titleLabel ?? "").trim() || defaults.titleLabel,
+      subtitleLabel: (labels.subtitleLabel ?? "").trim() || defaults.subtitleLabel,
+      peopleLabel: (labels.peopleLabel ?? "").trim() || defaults.peopleLabel,
+      peopleTagLabel: (labels.peopleTagLabel ?? "").trim() || defaults.peopleTagLabel,
+      messageLabel: (labels.messageLabel ?? "").trim() || defaults.messageLabel,
+      messageAuthorLabel: (labels.messageAuthorLabel ?? "").trim() || defaults.messageAuthorLabel,
+    };
+  }, [pageType, labels]);
 
   useEffect(() => {
     if (!id) return;
@@ -613,7 +659,8 @@ export function PageContentEditor() {
         const data = await metaRes.json().catch(() => ({}));
         throw new Error(data?.error || "Failed to save page settings");
       }
-      navigate("/admin/content", { replace: true });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -693,7 +740,7 @@ export function PageContentEditor() {
           <div>
             <label className={labelClass}>Visible sections</label>
             <div className="flex flex-wrap gap-4 mt-2">
-              {SECTION_OPTIONS.map(({ key, label }) => (
+              {SECTION_OPTIONS.map(({ key }) => (
                 <label
                   key={key}
                   className="flex items-center gap-2 cursor-pointer"
@@ -709,7 +756,7 @@ export function PageContentEditor() {
                     }
                     className="rounded border-slate-300"
                   />
-                  <span className="text-sm text-slate-700">{label}</span>
+                  <span className="text-sm text-slate-700">{getSectionLabel(key, displayLabels)}</span>
                 </label>
               ))}
             </div>
@@ -765,7 +812,17 @@ export function PageContentEditor() {
               <select
                 id="pageType"
                 value={pageType}
-                onChange={(e) => setPageType(e.target.value as PageType)}
+                onChange={(e) => {
+                  const newType = e.target.value as PageType;
+                  setPageType(newType);
+                  const newDefaults = DEFAULT_LABELS_BY_TYPE[newType] ?? DEFAULT_LABELS_BY_TYPE.event;
+                  const currentDefaults = DEFAULT_LABELS_BY_TYPE[pageType] ?? DEFAULT_LABELS_BY_TYPE.event;
+                  const keys: (keyof PageLabels)[] = ['themeLabel', 'titleLabel', 'subtitleLabel', 'peopleLabel', 'peopleTagLabel', 'messageLabel', 'messageAuthorLabel'];
+                  const labelsMatchCurrentDefaults = !labels || keys.every((k) => (labels[k] ?? "").trim() === "" || labels[k] === currentDefaults[k]);
+                  if (labelsMatchCurrentDefaults) {
+                    setLabels(newDefaults);
+                  }
+                }}
                 className={inputClass}
               >
                 {PAGE_TYPE_OPTIONS.map((o) => (
@@ -803,34 +860,34 @@ export function PageContentEditor() {
             </div>
           </div>
           {showCustomLabels && (
-            <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
+            <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
               <p className="text-sm text-slate-500">
-                Override labels shown on the page. Leave blank to use defaults
-                for the selected type.
+                Override labels shown on the page. Leave blank to use defaults for the selected type ({pageType}).
               </p>
               {(
                 [
-                  "themeLabel",
-                  "titleLabel",
-                  "subtitleLabel",
-                  "peopleLabel",
-                  "peopleTagLabel",
-                  "messageLabel",
-                  "messageAuthorLabel",
-                ] as const
-              ).map((key) => (
+                  { key: "themeLabel" as const, label: "Theme label" },
+                  { key: "titleLabel" as const, label: "Title label" },
+                  { key: "subtitleLabel" as const, label: "Subtitle label" },
+                  { key: "peopleLabel" as const, label: "People label" },
+                  { key: "peopleTagLabel" as const, label: "People tag label" },
+                  { key: "messageLabel" as const, label: "Message label" },
+                  { key: "messageAuthorLabel" as const, label: "Message author label" },
+                ]
+              ).map(({ key, label }) => (
                 <div key={key}>
                   <label htmlFor={key} className={labelClass}>
-                    {key.replace(/([A-Z])/g, " $1").trim()}
+                    {label}
                   </label>
                   <input
                     id={key}
                     type="text"
                     value={labels?.[key] ?? ""}
                     onChange={(e) => updateLabel(key, e.target.value)}
-                    placeholder={key}
+                    placeholder={displayLabels[key]}
                     className={inputClass}
                   />
+                  <p className="text-xs text-slate-400 mt-0.5">Default: {displayLabels[key]}</p>
                 </div>
               ))}
             </div>
@@ -974,10 +1031,10 @@ export function PageContentEditor() {
 
         {sectionVisibility.teacherMessage !== false && (
           <div className="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-4">
-            <h2 className="font-semibold text-slate-800">Teacher</h2>
+            <h2 className="font-semibold text-slate-800">{displayLabels.messageAuthorLabel}</h2>
             <div>
               <label htmlFor="teacherName" className={labelClass}>
-                Teacher name
+                {displayLabels.messageAuthorLabel} name
               </label>
               <input
                 id="teacherName"
@@ -990,7 +1047,7 @@ export function PageContentEditor() {
             </div>
             <div>
               <label htmlFor="teacherTitle" className={labelClass}>
-                Teacher title
+                {displayLabels.messageAuthorLabel} title
               </label>
               <input
                 id="teacherTitle"
@@ -1005,14 +1062,14 @@ export function PageContentEditor() {
               src={post.teacherPhoto || ""}
               onRemove={() => update("teacherPhoto", "")}
               onFileChange={handleTeacherPhotoUpload}
-              label="Teacher photo"
+              label={`${displayLabels.messageAuthorLabel} photo`}
               uploading={uploading}
               inputRef={teacherPhotoInputRef}
               size="lg"
             />
             <div>
               <label htmlFor="teacherMessage" className={labelClass}>
-                Teacher message
+                {displayLabels.messageLabel}
               </label>
               <textarea
                 id="teacherMessage"
@@ -1028,7 +1085,7 @@ export function PageContentEditor() {
                 src={post.teacherAudio || ""}
                 onRemove={handleRemoveTeacherAudio}
                 onFileChange={handleTeacherAudioUpload}
-                label="Teacher voice recording"
+                label={`${displayLabels.messageAuthorLabel} voice recording`}
                 uploading={uploading}
                 inputRef={teacherAudioInputRef}
                 error={audioError}
@@ -1039,10 +1096,10 @@ export function PageContentEditor() {
 
         {sectionVisibility.peopleList !== false && (
           <div className="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-4">
-            <h2 className="font-semibold text-slate-800">Students</h2>
+            <h2 className="font-semibold text-slate-800">{displayLabels.peopleLabel}</h2>
             <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
               <span className="text-sm text-slate-500">
-                Add students with optional honor flag
+                Add {displayLabels.peopleLabel.toLowerCase()} with optional {displayLabels.peopleTagLabel.toLowerCase()} flag
               </span>
               <div className="flex gap-3">
                 {post.students.some((s) => s.honor) && (
@@ -1051,7 +1108,7 @@ export function PageContentEditor() {
                     onClick={uncheckAllHonor}
                     className="text-sm text-slate-600 hover:text-slate-800"
                   >
-                    Uncheck all Honor
+                    Uncheck all {displayLabels.peopleTagLabel}
                   </button>
                 )}
                 <button
@@ -1059,7 +1116,7 @@ export function PageContentEditor() {
                   onClick={addStudent}
                   className="text-sm text-blue-600 hover:text-blue-700"
                 >
-                  + Add student
+                  + Add {(displayLabels.peopleLabel.endsWith("s") ? displayLabels.peopleLabel.slice(0, -1) : "person")}
                 </button>
               </div>
             </div>
@@ -1119,8 +1176,8 @@ export function PageContentEditor() {
                   type="text"
                   value={s.name}
                   onChange={(e) => updateStudent(idx, "name", e.target.value)}
-                  placeholder="Student name"
-                  aria-label={`Student ${idx + 1} name`}
+                  placeholder={`${displayLabels.peopleLabel.endsWith("s") ? displayLabels.peopleLabel.slice(0, -1) : "Person"} name`}
+                  aria-label={`${displayLabels.peopleLabel} ${idx + 1} name`}
                   className={inputClass}
                 />
                 <label className="flex items-center gap-2 shrink-0">
@@ -1131,7 +1188,7 @@ export function PageContentEditor() {
                       updateStudent(idx, "honor", e.target.checked)
                     }
                   />
-                  <span className="text-sm text-slate-600">Honor</span>
+                  <span className="text-sm text-slate-600">{displayLabels.peopleTagLabel}</span>
                 </label>
                 <button
                   type="button"
@@ -1157,13 +1214,16 @@ export function PageContentEditor() {
           </div>
         )}
 
-        <div className="sticky bottom-0 z-10 -mx-6 px-6 py-4 mt-6 bg-slate-100 border-t border-slate-200 flex gap-3">
+        <div className="sticky bottom-0 z-10 -mx-6 px-6 py-4 mt-6 bg-slate-100 border-t border-slate-200 flex flex-wrap items-center gap-3">
+          {saved && (
+            <span className="text-green-700 font-medium text-sm">Saved successfully.</span>
+          )}
           <button
             type="submit"
             disabled={saving}
             className="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Saving..." : saved ? "Saved!" : "Save"}
           </button>
           <Link
             to="/admin/content"

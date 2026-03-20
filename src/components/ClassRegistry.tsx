@@ -23,7 +23,7 @@ function StudentAvatar({ src }: { src: string }) {
   );
 }
 
-export function ClassRegistry({ students, togetherSince, peopleLabel = 'Class Registry', peopleTagLabel = 'Honor', showStudentPhotos }: ClassRegistryProps) {
+export function ClassRegistry({ students, togetherSince, peopleLabel = 'Attendees', peopleTagLabel = 'VIP', showStudentPhotos }: ClassRegistryProps) {
   return (
     <section className="rounded-3xl p-8 text-white shadow-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
       <h2 className="text-xl font-bold mb-6 flex items-center gap-3">

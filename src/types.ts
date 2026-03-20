@@ -1,4 +1,14 @@
-export type PageType = 'graduation' | 'wedding' | 'event';
+export type PageType =
+  | 'graduation'
+  | 'wedding'
+  | 'event'
+  | 'birthday'
+  | 'anniversary'
+  | 'reunion'
+  | 'retirement'
+  | 'babyShower'
+  | 'farewell'
+  | 'engagement';
 
 export type PageThemePreset =
   | 'default'
