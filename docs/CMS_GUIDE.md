@@ -5,7 +5,7 @@ Guide for admins and editors using the Graduation Memories CMS. The app supports
 ## Features
 
 - **Page types** — Graduation, Wedding, or Event (changes labels)
-- **Color themes** — Per-page themes: Default, Blue, Green, Rose, Amber, Indigo, Violet, Cyan, Red, Slate, Fuchsia, Emerald, Sky, Lime, Orange, Teal, Pink, Stone
+- **Color themes** — 50 per-page themes (Default plus Blue, Green, Rose, Navy, Cobalt, Mint, Sage, Coral, Gold, Plum, Lavender, Aqua, Charcoal, Ruby, Jade, Iris, Peach, Lilac, Steel, and more)
 - **Visible sections** — Toggle class photo, gallery, message block, people list
 - **Image upload** — Upload photos directly (no paths to type)
 - **Custom labels** — Override default labels per page
@@ -40,7 +40,7 @@ Editors only see pages that an admin has assigned to them.
 1. Go to **Content** in the navigation
 2. Click **Edit content** next to the page you want to edit
 3. **Page type** (optional): Choose Graduation, Wedding, or Event. This changes the labels shown on the public page (e.g. "Section" vs "Event", "Students" vs "Guests").
-4. **Color theme** (optional): Choose Default, Blue, Green, Rose, Amber, Indigo, Violet, Cyan, Red, Slate, Fuchsia, Emerald, Sky, Lime, Orange, Teal, Pink, or Stone. Each option shows a preview swatch. The theme affects the hero gradient, section cards, and accents on the public page.
+4. **Color theme** (optional): Choose from 50 themes (Default plus Blue, Green, Rose, Navy, Cobalt, Mint, Coral, Gold, Plum, Lavender, and more). Each option shows a preview swatch. The theme affects the hero gradient, section cards, and accents on the public page.
 5. **Visible sections** (optional): Uncheck any section to hide it on the public page. Disabled sections are also hidden in the editor to avoid editing content that won’t appear. Sections you can toggle:
    - **Class/cover photo** — main photo with batch and location
    - **Image gallery** — slider of additional images

@@ -21,12 +21,30 @@ const SECTION_OPTIONS: { key: keyof SectionVisibility; label: string }[] = [
   { key: 'peopleList', label: 'People list (students/guests)' },
 ];
 
-function ImagePreview({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
+
+function ImagePreview({ src, alt, size = 'md', className = '' }: { src: string; alt: string; size?: 'sm' | 'md' | 'lg' | 'fill'; className?: string }) {
   const [errored, setErrored] = useState(false);
-  const sizeClass = size === 'lg' ? 'w-24 h-24' : size === 'sm' ? 'w-12 h-12' : 'w-14 h-14';
+  const sizeClass =
+    size === 'fill'
+      ? 'aspect-square w-full min-w-0'
+      : size === 'lg'
+        ? 'w-24 h-24'
+        : size === 'sm'
+          ? 'w-12 h-12'
+          : 'w-14 h-14';
+  const shrinkClass = size === 'fill' ? '' : 'shrink-0';
   if (!src?.trim()) return null;
   return (
-    <div className={`shrink-0 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 ${sizeClass} ${className}`}>
+    <div className={`rounded-lg overflow-hidden border border-slate-200 bg-slate-50 ${sizeClass} ${shrinkClass} ${className}`}>
       {errored ? (
         <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">?</div>
       ) : (
@@ -71,9 +89,10 @@ function ImageUploadSlot({
             <button
               type="button"
               onClick={onRemove}
-              className="absolute top-1 right-1 px-2 py-1 text-xs bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-1 right-1 p-1.5 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Remove"
             >
-              Remove
+              <TrashIcon />
             </button>
           </div>
         ) : (
@@ -396,7 +415,8 @@ export function PageContentEditor() {
           </div>
           <div>
             <label className={labelClass}>Color theme</label>
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="overflow-x-auto overflow-y-hidden -mx-1 px-1 pb-2 mt-2 scroll-smooth">
+              <div className="grid grid-flow-col grid-rows-4 auto-cols-[minmax(5.5rem,5.5rem)] gap-3 w-max">
               {THEME_OPTIONS.map(({ value, label }) => {
                 const colors = getThemeColors(value);
                 const isSelected = colorTheme === value;
@@ -405,25 +425,26 @@ export function PageContentEditor() {
                     key={value}
                     type="button"
                     onClick={() => setColorTheme(value)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors ${
+                    className={`flex flex-col items-center gap-1.5 px-2 py-2 rounded-lg border-2 transition-colors ${
                       isSelected ? 'border-slate-800 ring-2 ring-slate-300' : 'border-slate-200 hover:border-slate-400'
                     }`}
                   >
                     <div
-                      className="w-10 h-6 rounded flex items-center justify-end pr-1"
+                      className="w-full h-8 rounded flex items-center justify-end pr-1"
                       style={{
                         background: `linear-gradient(90deg, ${colors.gradientStart}, ${colors.gradientEnd})`,
                       }}
                     >
                       <div
-                        className="w-2 h-2 rounded-full"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{ backgroundColor: colors.accent }}
                       />
                     </div>
-                    <span className="text-sm font-medium text-slate-700">{label}</span>
+                    <span className="text-xs font-medium text-slate-700">{label}</span>
                   </button>
                 );
               })}
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
@@ -575,21 +596,22 @@ export function PageContentEditor() {
                     {uploading ? 'Uploading…' : 'Upload images'}
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                   {post.gallery.length === 0 ? (
-                    <div className="flex items-center justify-center w-14 h-14 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 text-xs">
+                    <div className="col-span-full flex items-center justify-center min-h-[3.5rem] rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-500 text-xs">
                       No images yet
                     </div>
                   ) : (
                     post.gallery.map((url, idx) => (
-                      <div key={idx} className="relative group">
-                        <ImagePreview src={url} alt={`Gallery ${idx + 1}`} size="md" />
+                      <div key={idx} className="relative group w-full min-w-0">
+                        <ImagePreview src={url} alt={`Gallery ${idx + 1}`} size="fill" />
                         <button
                           type="button"
                           onClick={() => removeGalleryUrl(idx)}
-                          className="absolute top-1 right-1 px-2 py-1 text-xs bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1.5 bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Remove"
                         >
-                          Remove
+                          <TrashIcon />
                         </button>
                       </div>
                     ))
@@ -693,9 +715,10 @@ export function PageContentEditor() {
               <button
                 type="button"
                 onClick={() => removeStudent(idx)}
-                className="px-3 py-2 text-red-600 hover:text-red-700"
+                className="p-2 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50"
+                aria-label="Remove"
               >
-                Remove
+                <TrashIcon />
               </button>
             </div>
           ))}
