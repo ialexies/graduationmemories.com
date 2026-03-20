@@ -29,7 +29,7 @@ function PostRoute() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Loading...</div>
+        <div className="text-slate-500 animate-pulse">Loading...</div>
       </div>
     );
   }

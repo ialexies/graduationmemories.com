@@ -60,7 +60,7 @@ export function ImageSlider({
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-colors [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Previous image"
             >
               <svg
@@ -81,7 +81,7 @@ export function ImageSlider({
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-colors [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Next image"
             >
               <svg
@@ -105,7 +105,7 @@ export function ImageSlider({
                   key={i}
                   type="button"
                   onClick={() => setCurrent(i)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
+                  className={`w-2 h-2 rounded-full transition-smooth ${
                     i === current ? '' : 'opacity-50 hover:opacity-75'
                   }`}
                   style={{ backgroundColor: i === current ? 'var(--theme-accent)' : 'white' }}

@@ -714,9 +714,9 @@ export function PageContentEditor() {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 animate-slide-up">
             <p className="font-medium">{error}</p>
             {error.toLowerCase().includes("fetch") && (
               <p className="text-sm mt-1">
@@ -778,7 +778,7 @@ export function PageContentEditor() {
                       key={value}
                       type="button"
                       onClick={() => setColorTheme(value)}
-                      className={`flex flex-col items-center gap-1.5 px-2 py-2 rounded-lg border-2 transition-colors ${
+                      className={`flex flex-col items-center gap-1.5 px-2 py-2 rounded-lg border-2 transition-smooth ${
                         isSelected
                           ? "border-slate-800 ring-2 ring-slate-300"
                           : "border-slate-200 hover:border-slate-400"
@@ -860,7 +860,7 @@ export function PageContentEditor() {
             </div>
           </div>
           {showCustomLabels && (
-            <div className="mt-4 pt-4 border-t border-slate-200 space-y-4">
+            <div className="mt-4 pt-4 border-t border-slate-200 space-y-4 animate-fade-in">
               <p className="text-sm text-slate-500">
                 Override labels shown on the page. Leave blank to use defaults for the selected type ({pageType}).
               </p>
@@ -1216,18 +1216,18 @@ export function PageContentEditor() {
 
         <div className="sticky bottom-0 z-10 -mx-6 px-6 py-4 mt-6 bg-slate-100 border-t border-slate-200 flex flex-wrap items-center gap-3">
           {saved && (
-            <span className="text-green-700 font-medium text-sm">Saved successfully.</span>
+            <span className="text-green-700 font-medium text-sm animate-slide-up">Saved successfully.</span>
           )}
           <button
             type="submit"
             disabled={saving}
-            className="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-smooth btn-press"
           >
             {saving ? "Saving..." : saved ? "Saved!" : "Save"}
           </button>
           <Link
             to="/admin/content"
-            className="py-2 px-6 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
+            className="py-2 px-6 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-smooth"
           >
             Cancel
           </Link>

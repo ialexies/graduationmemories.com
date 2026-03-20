@@ -29,7 +29,7 @@ export function Footer({ footer }: FooterProps) {
           href={footer.linkUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-block hover:opacity-80 transition-opacity"
+          className="inline-block hover:opacity-80 transition-smooth"
         >
           {branding}
         </a>

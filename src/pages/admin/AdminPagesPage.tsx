@@ -122,24 +122,24 @@ export function AdminPagesPage() {
         <button
           type="button"
           onClick={openCreateModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-smooth btn-press"
         >
           Create new page
         </button>
       </div>
       {pages.length === 0 ? (
-        <div className="bg-white rounded-xl shadow border border-slate-200 p-12 text-center">
+        <div className="bg-white rounded-xl shadow border border-slate-200 p-12 text-center animate-fade-in">
           <p className="text-slate-600 mb-4">No pages yet. Create your first page to get started.</p>
           <button
             type="button"
             onClick={openCreateModal}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-smooth btn-press"
           >
             Create new page
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden animate-fade-in">
           <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -197,8 +197,8 @@ export function AdminPagesPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-scale-in">
             <h2 className="text-xl font-bold text-slate-800 mb-4">Create new page</h2>
             {createdPageId ? (
               <div>
@@ -285,7 +285,7 @@ export function AdminPagesPage() {
                   <button
                     type="submit"
                     disabled={createLoading || !createPageId.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-smooth btn-press"
                   >
                     {createLoading ? 'Creating…' : 'Create'}
                   </button>

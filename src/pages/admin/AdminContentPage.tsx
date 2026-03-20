@@ -21,7 +21,7 @@ export function AdminContentPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-slate-500">Loading...</div>;
+  if (loading) return <div className="text-slate-500 animate-pulse">Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -30,7 +30,7 @@ export function AdminContentPage() {
       <p className="text-slate-500 mb-4">
         Edit content for class pages. Select a page to edit its section name, quote, teacher message, students, and more.
       </p>
-      <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden animate-fade-in">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -46,8 +46,12 @@ export function AdminContentPage() {
                 </td>
               </tr>
             ) : (
-              pages.map((page) => (
-                <tr key={page.id} className="border-b border-slate-100 last:border-0">
+              pages.map((page, idx) => (
+                <tr
+                  key={page.id}
+                  className="border-b border-slate-100 last:border-0 animate-fade-in"
+                  style={{ animationDelay: `${Math.min(idx * 40, 200)}ms` }}
+                >
                   <td className="px-4 py-3 text-slate-700">
                     <span className="font-medium">{page.label?.trim() || page.id}</span>
                     {page.label?.trim() && (
