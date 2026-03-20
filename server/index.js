@@ -4,7 +4,9 @@ import cors from 'cors';
 import multer from 'multer';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { writeFile } from 'fs/promises';
+import sharp from 'sharp';
 import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
@@ -15,7 +17,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
+
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 initDb();
 seedDb();
@@ -44,7 +48,7 @@ app.get('/api/pages/:id', (req, res) => {
     footer,
     type: meta?.type || 'graduation',
     labels: meta?.labels || {},
-    sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true },
+    sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true, studentPhotos: false },
     colorTheme: meta?.colorTheme || 'default',
   });
 });
@@ -67,10 +71,15 @@ app.post('/api/admin/login', (req, res) => {
 app.use('/api/admin', authMiddleware);
 
 app.get('/api/admin/pages', (req, res) => {
-  const editableIds = getEditablePageIds(req.user.id, req.user.role);
-  if (editableIds.length === 0) return res.json({ pages: [] });
-  const pages = db.prepare('SELECT * FROM pages WHERE id IN (' + editableIds.map(() => '?').join(',') + ') ORDER BY id').all(...editableIds);
-  res.json({ pages });
+  try {
+    const editableIds = getEditablePageIds(req.user.id, req.user.role);
+    if (editableIds.length === 0) return res.json({ pages: [] });
+    const pages = db.prepare('SELECT * FROM pages WHERE id IN (' + editableIds.map(() => '?').join(',') + ') ORDER BY id').all(...editableIds);
+    res.json({ pages });
+  } catch (err) {
+    console.error('GET /api/admin/pages error:', err);
+    res.status(500).json({ error: err.message || 'Failed to load pages' });
+  }
 });
 
 app.get('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
@@ -81,12 +90,17 @@ app.get('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
 });
 
 app.put('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
-  const { id } = req.params;
-  const post = req.body;
-  const pageExists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(id);
-  if (!pageExists) return res.status(404).json({ error: 'Page not found' });
-  savePostContent(id, post);
-  res.json(getPostContent(id));
+  try {
+    const { id } = req.params;
+    const post = req.body;
+    const pageExists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(id);
+    if (!pageExists) return res.status(404).json({ error: 'Page not found' });
+    savePostContent(id, post);
+    res.json(getPostContent(id));
+  } catch (err) {
+    console.error('PUT content error:', err);
+    res.status(500).json({ error: err.message || 'Failed to save content' });
+  }
 });
 
 // Image upload: stores in public/assets/{pageId}/, returns path e.g. /assets/h322x/class-photo.jpg
@@ -112,10 +126,63 @@ const upload = multer({
   },
 });
 
-app.post('/api/admin/pages/:id/upload', requirePageAccess('id'), upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const path = `/assets/${req.params.id}/${req.file.filename}`;
-  res.json({ path });
+const MAX_IMAGE_DIMENSION = 2048;
+const MAX_INPUT_DIMENSION = 8000; // reject images larger than this (safety)
+const JPEG_QUALITY = 85;
+const WEBP_QUALITY = 85;
+
+app.post('/api/admin/pages/:id/upload', requirePageAccess('id'), (req, res, next) => {
+  upload.single('file')(req, res, async (multerErr) => {
+    try {
+      if (multerErr) {
+        console.error('Multer error:', multerErr);
+        return res.status(400).json({ error: multerErr.message || 'Upload failed' });
+      }
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+      const filePath = req.file.path;
+      const ext = (req.file.filename.split('.').pop() || 'jpg').toLowerCase();
+      try {
+        const image = sharp(filePath);
+        const metadata = await image.metadata();
+        const { width = 0, height = 0 } = metadata;
+
+        if (width > MAX_INPUT_DIMENSION || height > MAX_INPUT_DIMENSION) {
+          unlinkSync(filePath);
+          return res.status(400).json({
+            error: `Image resolution too large. Maximum ${MAX_INPUT_DIMENSION}×${MAX_INPUT_DIMENSION} pixels.`,
+          });
+        }
+
+        let pipeline = image.resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        });
+
+        if (['jpg', 'jpeg'].includes(ext)) {
+          pipeline = pipeline.jpeg({ quality: JPEG_QUALITY });
+        } else if (ext === 'png') {
+          pipeline = pipeline.png({ compressionLevel: 9 });
+        } else if (ext === 'webp') {
+          pipeline = pipeline.webp({ quality: WEBP_QUALITY });
+        } else if (ext === 'gif') {
+          pipeline = pipeline.gif();
+        }
+
+        const buffer = await pipeline.toBuffer();
+        await writeFile(filePath, buffer);
+      } catch (err) {
+        console.error('Image processing error (keeping original):', err.message);
+        // Keep original file if sharp fails - upload still succeeds
+      }
+
+      const path = `/assets/${req.params.id}/${req.file.filename}`;
+      res.json({ path });
+    } catch (err) {
+      console.error('Upload handler error:', err);
+      if (req.file?.path && existsSync(req.file.path)) unlinkSync(req.file.path);
+      res.status(500).json({ error: err.message || 'Upload failed' });
+    }
+  });
 });
 
 app.get('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
@@ -126,20 +193,24 @@ app.get('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
 });
 
 app.put('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
-  const { id } = req.params;
-  // Ensure page exists (may be missing if content was backfilled but page never seeded)
-  const pageExists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(id);
-  if (!pageExists) {
-    const hasContent = db.prepare('SELECT 1 FROM posts_content WHERE page_id = ?').get(id);
-    if (hasContent) {
-      db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'graduation');
-    } else {
-      return res.status(404).json({ error: 'Page not found' });
+  try {
+    const { id } = req.params;
+    const pageExists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(id);
+    if (!pageExists) {
+      const hasContent = db.prepare('SELECT 1 FROM posts_content WHERE page_id = ?').get(id);
+      if (hasContent) {
+        db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'graduation');
+      } else {
+        return res.status(404).json({ error: 'Page not found' });
+      }
     }
+    const ok = savePageMeta(id, req.body);
+    if (!ok) return res.status(404).json({ error: 'Page not found' });
+    res.json(getPageMeta(id));
+  } catch (err) {
+    console.error('PUT meta error:', err);
+    res.status(500).json({ error: err.message || 'Failed to save meta' });
   }
-  const ok = savePageMeta(id, req.body);
-  if (!ok) return res.status(404).json({ error: 'Page not found' });
-  res.json(getPageMeta(id));
 });
 
 app.get('/api/admin/footer', (req, res) => {
@@ -271,6 +342,11 @@ app.get('*', (req, res, next) => {
   res.status(503).send(
     '<html><body><h1>Frontend not built</h1><p>Run <code>npm run build</code> then restart the server. Or use <code>npm run dev</code> for development (Vite serves the app on port 5173).</p></body></html>'
   );
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
 app.listen(PORT, () => {

@@ -8,21 +8,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://127.0.0.1:3001',
         changeOrigin: true,
+        secure: false,
         configure: (proxy) => {
-          // Ensure POST body and headers are forwarded (fixes multipart uploads)
           proxy.on('proxyReq', (proxyReq, req) => {
             if (req.headers['authorization']) {
-              proxyReq.setHeader('Authorization', req.headers['authorization'])
+              proxyReq.setHeader('Authorization', req.headers['authorization']);
             }
-            if (req.headers['content-type']) {
-              proxyReq.setHeader('Content-Type', req.headers['content-type'])
-            }
-            if (req.headers['content-length']) {
-              proxyReq.setHeader('Content-Length', req.headers['content-length'])
-            }
-          })
+          });
         },
       },
     },

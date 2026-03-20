@@ -193,6 +193,7 @@ const DEFAULT_SECTION_VISIBILITY = {
   gallery: true,
   teacherMessage: true,
   peopleList: true,
+  studentPhotos: false,
 };
 
 const DEFAULT_LABELS = {
@@ -385,18 +386,18 @@ export function savePostContent(pageId, post) {
       updated_at = datetime('now')
   `).run(
     pageId,
-    post.sectionName,
-    post.batch,
-    post.location,
-    post.quote,
-    post.classPhoto,
+    post.sectionName ?? '',
+    post.batch ?? '',
+    post.location ?? '',
+    post.quote ?? '',
+    post.classPhoto ?? '',
     JSON.stringify(post.gallery || []),
-    post.teacherMessage,
-    post.teacherName,
+    post.teacherMessage ?? '',
+    post.teacherName ?? '',
     post.teacherPhoto || null,
-    post.teacherTitle,
+    post.teacherTitle ?? '',
     JSON.stringify(post.students || []),
-    post.togetherSince
+    post.togetherSince ?? ''
   );
 }
 

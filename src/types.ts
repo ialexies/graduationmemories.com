@@ -68,11 +68,13 @@ export interface SectionVisibility {
   gallery?: boolean;
   teacherMessage?: boolean;
   peopleList?: boolean;
+  studentPhotos?: boolean;
 }
 
 export interface Student {
   name: string;
   honor?: boolean;
+  photo?: string;
 }
 
 export interface Post {

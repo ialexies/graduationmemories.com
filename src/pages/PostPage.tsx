@@ -16,7 +16,7 @@ interface PostPageProps {
   colorTheme?: string;
 }
 
-const DEFAULT_VISIBILITY = { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true };
+const DEFAULT_VISIBILITY = { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true, studentPhotos: false };
 
 export function PostPage({ post, footer, labels, sectionVisibility, colorTheme = 'default' }: PostPageProps) {
   const vis = { ...DEFAULT_VISIBILITY, ...sectionVisibility };
@@ -63,6 +63,7 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
             togetherSince={post.togetherSince}
             peopleLabel={labels?.peopleLabel}
             peopleTagLabel={labels?.peopleTagLabel}
+            showStudentPhotos={vis.studentPhotos}
           />
         )}
 

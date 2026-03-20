@@ -46,17 +46,18 @@ Editors only see pages that an admin has assigned to them.
    - **Image gallery** — slider of additional images
    - **Message block** — teacher/couple/host message
    - **People list** — students or guests with optional Honor/VIP
+   - **Student profile photos** — show profile photos next to names (enable to upload per-student images)
    - Click **Save page settings** to apply, or **Save** at the bottom to save content and settings together.
 6. **Custom labels** (optional): Click "Custom labels..." to override any label (theme, title, people list heading, etc.) for this page. Leave blank to use defaults for the selected type.
 7. Fill in or update the content fields shown. Re-enable a section in step 5 to edit it again.
    - **Section & basic info**: Section/event name, batch/date (when class photo enabled), location (when class photo enabled), quote
-   - **Images** (when enabled): Upload class photo and gallery images; use Remove to delete. Supported: JPEG, PNG, GIF, WebP (max 10MB).
+   - **Images** (when enabled): Upload class photo and gallery images; use Remove to delete. Supported: JPEG, PNG, GIF, WebP (max 10MB). Images are auto-resized and compressed.
    - **Teacher/Author** (when message block enabled): Name, title, photo, message (works for graduation teacher, wedding couple, or event host)
    - **Students/Guests** (when people list enabled): Add/remove people; optionally check Honor/VIP
    - **Together since**: e.g. "June 2025"
 8. Click **Save** to save content and page settings, or **Save page settings** to save only type, labels, and visible sections.
 
-**Images**: Upload only — no paths to type. Click **Upload photo** (class/teacher) or **Upload images** (gallery) to choose files. Use **Replace** to change an image or **Remove** to delete it. Files are stored under `/assets/{pageId}/`. Supported: JPEG, PNG, GIF, WebP (max 10MB per file).
+**Images**: Upload only — no paths to type. Click **Upload photo** (class/teacher) or **Upload images** (gallery) to choose files. Use **Replace** to change an image or **Remove** to delete it. Files are stored under `/assets/{pageId}/`. Supported: JPEG, PNG, GIF, WebP (max 10MB per file). Images are automatically resized to max 2048px on the longest side and compressed for faster loading. Maximum resolution: 8000×8000 pixels.
 
 ---
 
