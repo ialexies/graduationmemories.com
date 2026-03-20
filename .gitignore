@@ -25,3 +25,7 @@ dist-ssr
 
 # Server
 server/data.db
+
+# Environment
+.env
+.env.*
