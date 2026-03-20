@@ -12,10 +12,14 @@ import { AdminPagesPage } from './pages/admin/AdminPagesPage';
 import { AdminTokensPage } from './pages/admin/AdminTokensPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
+const TOKEN_STORAGE_PREFIX = 'gm_token_';
+
 function PostRoute() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('t');
+  const tokenFromUrl = searchParams.get('t');
+  const tokenFromStorage = id ? sessionStorage.getItem(`${TOKEN_STORAGE_PREFIX}${id}`) : null;
+  const token = tokenFromUrl || tokenFromStorage;
   const { post, footer, loading, error } = usePost(id, token);
 
   if (loading) {

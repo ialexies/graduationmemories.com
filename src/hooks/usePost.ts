@@ -34,10 +34,12 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
     fetch(url)
       .then(async (res) => {
         if (res.status === 401) {
+          sessionStorage.removeItem(`gm_token_${pageId}`);
           setError('invalid');
           return;
         }
         if (res.status === 403) {
+          sessionStorage.removeItem(`gm_token_${pageId}`);
           setError('disabled');
           return;
         }
@@ -52,6 +54,8 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
         const data = await res.json();
         setPost(data.post);
         setFooter(data.footer);
+        sessionStorage.setItem(`gm_token_${pageId}`, token);
+        window.history.replaceState(null, '', `/${pageId}`);
       })
       .catch(() => setError('network'))
       .finally(() => setLoading(false));
