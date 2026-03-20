@@ -13,12 +13,12 @@ function getToken(): string | null {
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headers: HeadersInit = { ...options.headers };
   if (token) {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+  if (!(options.body instanceof FormData)) {
+    (headers as Record<string, string>)['Content-Type'] = 'application/json';
   }
   const res = await fetch(path, { ...options, headers });
   return res;

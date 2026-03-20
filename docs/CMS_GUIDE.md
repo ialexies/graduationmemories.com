@@ -32,17 +32,22 @@ Editors only see pages that an admin has assigned to them.
 1. Go to **Content** in the navigation
 2. Click **Edit content** next to the page you want to edit
 3. **Page type** (optional): Choose Graduation, Wedding, or Event. This changes the labels shown on the public page (e.g. "Section" vs "Event", "Students" vs "Guests").
-4. **Visible sections** (optional): Uncheck any section to hide it on the public page (class/cover photo, image gallery, message block, people list). Click **Save page settings** to apply.
+4. **Visible sections** (optional): Uncheck any section to hide it on the public page. Sections you can toggle:
+   - **Class/cover photo** — main photo with batch and location
+   - **Image gallery** — slider of additional images
+   - **Message block** — teacher/couple/host message
+   - **People list** — students or guests with optional Honor/VIP
+   - Click **Save page settings** to apply, or **Save** at the bottom to save content and settings together.
 5. **Custom labels** (optional): Click "Custom labels..." to override any label (theme, title, people list heading, etc.) for this page. Leave blank to use defaults for the selected type.
-6. Fill in or update:
-   - **Section & basic info**: Section/event name, batch/date, location, quote
-   - **Images**: Main photo path, gallery image paths
-   - **Teacher/Author**: Name, title, photo path, message (works for graduation teacher, wedding couple, or event host)
-   - **Students/Guests**: Add/remove people; optionally check Honor/VIP
+6. Fill in or update the content fields shown. **Disabled sections are hidden** in the editor to avoid editing content that won’t appear on the public page. Re-enable a section in the visible sections checkboxes to edit it again.
+   - **Section & basic info**: Section/event name, batch/date (when class photo enabled), location (when class photo enabled), quote
+   - **Images** (when enabled): Upload class photo and gallery images; use Remove to delete. Supported: JPEG, PNG, GIF, WebP (max 10MB).
+   - **Teacher/Author** (when message block enabled): Name, title, photo, message (works for graduation teacher, wedding couple, or event host)
+   - **Students/Guests** (when people list enabled): Add/remove people; optionally check Honor/VIP
    - **Together since**: e.g. "June 2025"
-7. Click **Save**
+7. Click **Save** to save content and page settings, or **Save page settings** to save only type, labels, and visible sections.
 
-Image paths should be like `/assets/h322x/class-photo.jpg`. Upload images via FTP or your existing process, then paste the path into the CMS.
+**Images**: Click **Upload photo** or **Upload images** to choose files from your computer. Use **Replace** to change an image, or **Remove** to delete it. Supported formats: JPEG, PNG, GIF, WebP (max 10MB per file).
 
 ---
 

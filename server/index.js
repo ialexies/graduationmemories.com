@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
@@ -85,6 +86,35 @@ app.put('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
   if (!pageExists) return res.status(404).json({ error: 'Page not found' });
   savePostContent(id, post);
   res.json(getPostContent(id));
+});
+
+// Image upload: stores in public/assets/{pageId}/, returns path e.g. /assets/h322x/class-photo.jpg
+const uploadDir = join(__dirname, '..', 'public', 'assets');
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const pageId = req.params.id;
+      const dir = join(uploadDir, pageId);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const ext = (file.originalname.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const base = file.originalname.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 50) || 'image';
+      cb(null, `${base}-${Date.now()}.${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+    cb(null, ok);
+  },
+});
+
+app.post('/api/admin/pages/:id/upload', requirePageAccess('id'), upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const path = `/assets/${req.params.id}/${req.file.filename}`;
+  res.json({ path });
 });
 
 app.get('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
@@ -221,6 +251,11 @@ app.post('/api/admin/assign', requireAdmin, (req, res) => {
     throw e;
   }
 });
+
+// Serve uploaded assets (public/assets) so /assets/pageId/file.jpg works
+const assetsPath = join(__dirname, '..', 'public', 'assets');
+if (!existsSync(assetsPath)) mkdirSync(assetsPath, { recursive: true });
+app.use('/assets', express.static(assetsPath));
 
 const distPath = join(__dirname, '..', 'dist');
 if (existsSync(distPath)) {
