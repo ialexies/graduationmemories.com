@@ -5,6 +5,7 @@ import { ImageSlider } from "../components/ImageSlider";
 import { TeacherMessage } from "../components/TeacherMessage";
 import { ClassRegistry } from "../components/ClassRegistry";
 import { Footer } from "../components/Footer";
+import { getThemeColors, toCssVars } from "../lib/themePresets";
 import type { Post, Footer as FooterType, PageLabels, SectionVisibility } from "../types";
 
 interface PostPageProps {
@@ -12,20 +13,22 @@ interface PostPageProps {
   footer: FooterType;
   labels?: PageLabels | null;
   sectionVisibility?: SectionVisibility | null;
+  colorTheme?: string;
 }
 
 const DEFAULT_VISIBILITY = { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true };
 
-export function PostPage({ post, footer, labels, sectionVisibility }: PostPageProps) {
+export function PostPage({ post, footer, labels, sectionVisibility, colorTheme = 'default' }: PostPageProps) {
   const vis = { ...DEFAULT_VISIBILITY, ...sectionVisibility };
   const themeLabel = labels?.themeLabel ?? 'Graduation Souvenir';
+  const themeVars = toCssVars(getThemeColors(colorTheme));
 
   useEffect(() => {
     document.title = `${themeLabel} | ${post.sectionName} | AC 3D Prints & Crafts`;
   }, [post.sectionName, themeLabel]);
 
   return (
-    <div className="bg-slate-50 text-slate-900 antialiased">
+    <div className="bg-slate-50 text-slate-900 antialiased" style={themeVars as React.CSSProperties}>
       <HeroSection
         sectionName={post.sectionName}
         quote={post.quote}

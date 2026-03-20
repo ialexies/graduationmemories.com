@@ -9,9 +9,9 @@ interface ClassRegistryProps {
 
 export function ClassRegistry({ students, togetherSince, peopleLabel = 'Class Registry', peopleTagLabel = 'Honor' }: ClassRegistryProps) {
   return (
-    <section className="bg-slate-900 rounded-3xl p-8 text-white shadow-2xl">
+    <section className="rounded-3xl p-8 text-white shadow-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
       <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-xs">
+        <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs" style={{ backgroundColor: 'var(--theme-accent)' }}>
           LIST
         </span>
         {peopleLabel}
@@ -20,7 +20,8 @@ export function ClassRegistry({ students, togetherSince, peopleLabel = 'Class Re
         {students.map((student) => (
           <div
             key={student.name}
-            className="flex justify-between border-b border-slate-800 pb-1"
+            className="flex justify-between border-b pb-1"
+            style={{ borderColor: 'rgba(255,255,255,0.2)' }}
           >
             <span>{student.name}</span>
             {student.honor && (

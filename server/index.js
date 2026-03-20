@@ -45,6 +45,7 @@ app.get('/api/pages/:id', (req, res) => {
     type: meta?.type || 'graduation',
     labels: meta?.labels || {},
     sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true },
+    colorTheme: meta?.colorTheme || 'default',
   });
 });
 

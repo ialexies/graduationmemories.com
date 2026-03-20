@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# Graduation Memories
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+NFC-based memory pages for graduations, weddings, and events. Visitors tap an NFC card to view a personalized page with photos, messages, and guest lists.
 
-Currently, two official plugins are available:
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React + TypeScript + Vite
+- **Backend:** Node.js + Express + SQLite
+- **Auth:** Token in URL for public pages; JWT for admin CMS
 
-## React Compiler
+## Quick start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+cd server && npm install
+npm run dev:server   # API on port 3001
+npm run dev          # Vite on port 5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Open http://localhost:5173/admin/login
+2. Log in (default: `admin@gradmemories.local` / `admin123`)
+3. Edit content, create tokens, and share NFC URLs
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Features
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Page types** — Graduation, Wedding, Event
+- **Per-page color themes** — Default, Blue, Green, Rose, Amber, Indigo
+- **Section visibility** — Toggle class photo, gallery, message block, people list
+- **Image upload** — Upload photos directly (no paths)
+- **Custom labels** — Override labels per page
+- **Admin / Editor roles** — Editors see only assigned pages
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Vite dev server (frontend) |
+| `npm run dev:server` | Start API server |
+| `npm run build` | Build for production |
+| `npm run start` | Run production server |
+
+## Documentation
+
+- [CMS User Guide](docs/CMS_GUIDE.md) — How to use the admin interface
+- [Deployment](DEPLOY.md) — Docker and manual deployment

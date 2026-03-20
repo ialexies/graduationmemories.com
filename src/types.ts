@@ -1,5 +1,7 @@
 export type PageType = 'graduation' | 'wedding' | 'event';
 
+export type PageThemePreset = 'default' | 'blue' | 'green' | 'rose' | 'amber' | 'indigo';
+
 export interface PageLabels {
   themeLabel: string;
   titleLabel: string;

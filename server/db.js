@@ -96,6 +96,12 @@ export function initDb() {
   if (labelCols.length === 0) {
     db.exec('ALTER TABLE page_labels ADD COLUMN section_visibility TEXT');
   }
+
+  // Migration: add color_theme to page_labels if missing
+  const themeCols = db.prepare("SELECT name FROM pragma_table_info('page_labels') WHERE name = 'color_theme'").all();
+  if (themeCols.length === 0) {
+    db.exec('ALTER TABLE page_labels ADD COLUMN color_theme TEXT');
+  }
 }
 
 export function seedDb() {
@@ -225,11 +231,18 @@ export function getPageLabels(pageId) {
   const pageType = page.type || 'graduation';
   const defaults = DEFAULT_LABELS[pageType] || DEFAULT_LABELS.graduation;
   const overrides = db.prepare('SELECT * FROM page_labels WHERE page_id = ?').get(pageId);
-  if (!overrides) return { type: pageType, labels: defaults, sectionVisibility: DEFAULT_SECTION_VISIBILITY };
+  if (!overrides) return { type: pageType, labels: defaults, sectionVisibility: DEFAULT_SECTION_VISIBILITY, colorTheme: 'default' };
   let sectionVisibility = DEFAULT_SECTION_VISIBILITY;
   if (overrides.section_visibility) {
     try {
       sectionVisibility = { ...DEFAULT_SECTION_VISIBILITY, ...JSON.parse(overrides.section_visibility) };
+    } catch (_) {}
+  }
+  let colorTheme = 'default';
+  if (overrides.color_theme) {
+    try {
+      const parsed = JSON.parse(overrides.color_theme);
+      colorTheme = parsed.preset || 'default';
     } catch (_) {}
   }
   return {
@@ -244,13 +257,19 @@ export function getPageLabels(pageId) {
       messageAuthorLabel: overrides.message_author_label ?? defaults.messageAuthorLabel,
     },
     sectionVisibility,
+    colorTheme,
   };
 }
 
 export function getPageMeta(pageId) {
   const data = getPageLabels(pageId);
   if (!data) return null;
-  return { type: data.type, labels: data.labels, sectionVisibility: data.sectionVisibility || DEFAULT_SECTION_VISIBILITY };
+  return {
+    type: data.type,
+    labels: data.labels,
+    sectionVisibility: data.sectionVisibility || DEFAULT_SECTION_VISIBILITY,
+    colorTheme: data.colorTheme || 'default',
+  };
 }
 
 export function savePageMeta(pageId, meta) {
@@ -288,6 +307,13 @@ export function savePageMeta(pageId, meta) {
       INSERT INTO page_labels (page_id, section_visibility) VALUES (?, ?)
       ON CONFLICT(page_id) DO UPDATE SET section_visibility = excluded.section_visibility
     `).run(pageId, JSON.stringify(meta.sectionVisibility));
+  }
+  if ('colorTheme' in meta) {
+    const preset = meta.colorTheme || 'default';
+    db.prepare(`
+      INSERT INTO page_labels (page_id, color_theme) VALUES (?, ?)
+      ON CONFLICT(page_id) DO UPDATE SET color_theme = excluded.color_theme
+    `).run(pageId, JSON.stringify({ preset }));
   }
   return true;
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
+import { THEME_OPTIONS, getThemeColors } from '../../lib/themePresets';
 import type { Post, Student, PageType, PageLabels, SectionVisibility } from '../../types';
 
 const inputClass =
@@ -113,6 +114,7 @@ export function PageContentEditor() {
     teacherMessage: true,
     peopleList: true,
   });
+  const [colorTheme, setColorTheme] = useState<string>('default');
   const [showCustomLabels, setShowCustomLabels] = useState(false);
   const [metaSaved, setMetaSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -145,6 +147,7 @@ export function PageContentEditor() {
         setPageType(metaData?.type ?? 'graduation');
         setLabels(metaData?.labels ?? null);
         setSectionVisibility((prev) => ({ ...prev, ...metaData?.sectionVisibility }));
+        setColorTheme(metaData?.colorTheme ?? 'default');
       })
       .catch((e) => setError(e.message || 'Failed to load'))
       .finally(() => setLoading(false));
@@ -261,7 +264,7 @@ export function PageContentEditor() {
     try {
       const res = await apiFetch(`/api/admin/pages/${id}/meta`, {
         method: 'PUT',
-        body: JSON.stringify({ type: pageType, labels: labels || undefined, sectionVisibility }),
+        body: JSON.stringify({ type: pageType, labels: labels || undefined, sectionVisibility, colorTheme }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -300,7 +303,7 @@ export function PageContentEditor() {
         }),
         apiFetch(`/api/admin/pages/${id}/meta`, {
           method: 'PUT',
-          body: JSON.stringify({ type: pageType, labels: labels || undefined, sectionVisibility }),
+          body: JSON.stringify({ type: pageType, labels: labels || undefined, sectionVisibility, colorTheme }),
         }),
       ]);
       if (!contentRes.ok) {
@@ -379,6 +382,38 @@ export function PageContentEditor() {
               ))}
             </div>
             <p className="text-xs text-slate-400 mt-1">Uncheck to hide a section from the public page. Click &quot;Save&quot; at the bottom to save everything, or &quot;Save page settings&quot; to save only these options.</p>
+          </div>
+          <div>
+            <label className={labelClass}>Color theme</label>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {THEME_OPTIONS.map(({ value, label }) => {
+                const colors = getThemeColors(value);
+                const isSelected = colorTheme === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setColorTheme(value)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-colors ${
+                      isSelected ? 'border-slate-800 ring-2 ring-slate-300' : 'border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    <div
+                      className="w-10 h-6 rounded flex items-center justify-end pr-1"
+                      style={{
+                        background: `linear-gradient(90deg, ${colors.gradientStart}, ${colors.gradientEnd})`,
+                      }}
+                    >
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: colors.accent }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="flex gap-4 items-end">
             <div className="flex-1">

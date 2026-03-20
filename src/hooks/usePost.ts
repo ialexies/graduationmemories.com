@@ -7,6 +7,7 @@ interface UsePostResult {
   type: PageType;
   labels: PageLabels | null;
   sectionVisibility: SectionVisibility | null;
+  colorTheme: string;
   loading: boolean;
   error: 'token_required' | 'invalid' | 'disabled' | 'not_found' | 'network' | null;
 }
@@ -27,6 +28,7 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
   const [type, setType] = useState<PageType>('graduation');
   const [labels, setLabels] = useState<PageLabels | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility | null>(null);
+  const [colorTheme, setColorTheme] = useState<string>('default');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<UsePostResult['error']>(null);
 
@@ -73,6 +75,7 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
         setType(data.type || 'graduation');
         setLabels(data.labels || DEFAULT_LABELS);
         setSectionVisibility(data.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true });
+        setColorTheme(data.colorTheme || 'default');
         sessionStorage.setItem(`gm_token_${pageId}`, token);
         window.history.replaceState(null, '', `/${pageId}`);
       })
@@ -80,5 +83,5 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
       .finally(() => setLoading(false));
   }, [pageId, token]);
 
-  return { post, footer, type, labels, sectionVisibility, loading, error };
+  return { post, footer, type, labels, sectionVisibility, colorTheme, loading, error };
 }

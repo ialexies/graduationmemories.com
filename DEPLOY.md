@@ -18,7 +18,7 @@ Exposes the app on port 8084. Set `JWT_SECRET` in `.env` for production:
 JWT_SECRET=your-random-secret-here
 ```
 
-SQLite data persists in the `graduationmemories-data` volume.
+SQLite data persists in the `graduationmemories-data` volume. Uploaded images are stored in `public/assets/{pageId}/` and served at `/assets/`.
 
 ## Manual deployment
 
@@ -26,6 +26,7 @@ SQLite data persists in the `graduationmemories-data` volume.
 2. Install server deps: `cd server && npm ci`
 3. Run server: `node server/index.js` (from project root)
 4. Server serves `dist/` and handles `/api` routes. Default port 3001 (or set `PORT`).
+5. Uploaded images go to `public/assets/`; ensure this directory is writable and persisted.
 
 ## NFC URLs
 

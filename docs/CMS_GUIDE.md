@@ -2,6 +2,14 @@
 
 Guide for admins and editors using the Graduation Memories CMS. The app supports multiple page types (graduation, wedding, event) so you can use it for class memories, wedding souvenirs, reunions, and more.
 
+## Features
+
+- **Page types** — Graduation, Wedding, or Event (changes labels)
+- **Color themes** — Per-page themes: Default, Blue, Green, Rose, Amber, Indigo
+- **Visible sections** — Toggle class photo, gallery, message block, people list
+- **Image upload** — Upload photos directly (no paths to type)
+- **Custom labels** — Override default labels per page
+
 ## Login
 
 1. Go to `/admin/login`
@@ -32,22 +40,23 @@ Editors only see pages that an admin has assigned to them.
 1. Go to **Content** in the navigation
 2. Click **Edit content** next to the page you want to edit
 3. **Page type** (optional): Choose Graduation, Wedding, or Event. This changes the labels shown on the public page (e.g. "Section" vs "Event", "Students" vs "Guests").
-4. **Visible sections** (optional): Uncheck any section to hide it on the public page. Sections you can toggle:
+4. **Color theme** (optional): Choose Default, Blue, Green, Rose, Amber, or Indigo. Each option shows a preview swatch. The theme affects the hero gradient, section cards, and accents on the public page.
+5. **Visible sections** (optional): Uncheck any section to hide it on the public page. Disabled sections are also hidden in the editor to avoid editing content that won’t appear. Sections you can toggle:
    - **Class/cover photo** — main photo with batch and location
    - **Image gallery** — slider of additional images
    - **Message block** — teacher/couple/host message
    - **People list** — students or guests with optional Honor/VIP
    - Click **Save page settings** to apply, or **Save** at the bottom to save content and settings together.
-5. **Custom labels** (optional): Click "Custom labels..." to override any label (theme, title, people list heading, etc.) for this page. Leave blank to use defaults for the selected type.
-6. Fill in or update the content fields shown. **Disabled sections are hidden** in the editor to avoid editing content that won’t appear on the public page. Re-enable a section in the visible sections checkboxes to edit it again.
+6. **Custom labels** (optional): Click "Custom labels..." to override any label (theme, title, people list heading, etc.) for this page. Leave blank to use defaults for the selected type.
+7. Fill in or update the content fields shown. Re-enable a section in step 5 to edit it again.
    - **Section & basic info**: Section/event name, batch/date (when class photo enabled), location (when class photo enabled), quote
    - **Images** (when enabled): Upload class photo and gallery images; use Remove to delete. Supported: JPEG, PNG, GIF, WebP (max 10MB).
    - **Teacher/Author** (when message block enabled): Name, title, photo, message (works for graduation teacher, wedding couple, or event host)
    - **Students/Guests** (when people list enabled): Add/remove people; optionally check Honor/VIP
    - **Together since**: e.g. "June 2025"
-7. Click **Save** to save content and page settings, or **Save page settings** to save only type, labels, and visible sections.
+8. Click **Save** to save content and page settings, or **Save page settings** to save only type, labels, and visible sections.
 
-**Images**: Click **Upload photo** or **Upload images** to choose files from your computer. Use **Replace** to change an image, or **Remove** to delete it. Supported formats: JPEG, PNG, GIF, WebP (max 10MB per file).
+**Images**: Upload only — no paths to type. Click **Upload photo** (class/teacher) or **Upload images** (gallery) to choose files. Use **Replace** to change an image or **Remove** to delete it. Files are stored under `/assets/{pageId}/`. Supported: JPEG, PNG, GIF, WebP (max 10MB per file).
 
 ---
 
@@ -80,3 +89,4 @@ The footer appears on all class pages.
 1. Go to **Users**
 2. **Create user**: Enter email, password, name, and **Role** (Admin or Editor)
 3. **Assign page to user**: Select a user and page, then click Assign — this gives editors access to edit that page’s content
+
