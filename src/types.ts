@@ -1,6 +1,6 @@
 export type PageType = 'graduation' | 'wedding' | 'event';
 
-export type PageThemePreset = 'default' | 'blue' | 'green' | 'rose' | 'amber' | 'indigo';
+export type PageThemePreset = 'default' | 'blue' | 'green' | 'rose' | 'amber' | 'indigo' | 'violet' | 'cyan' | 'red' | 'slate' | 'fuchsia' | 'emerald' | 'sky' | 'lime' | 'orange' | 'teal' | 'pink' | 'stone';
 
 export interface PageLabels {
   themeLabel: string;

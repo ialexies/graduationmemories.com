@@ -24,7 +24,7 @@ npm run dev          # Vite on port 5173
 ## Features
 
 - **Page types** — Graduation, Wedding, Event
-- **Per-page color themes** — Default, Blue, Green, Rose, Amber, Indigo
+- **Per-page color themes** — Default, Blue, Green, Rose, Amber, Indigo, Violet, Cyan, Red, Slate, Fuchsia, Emerald, Sky, Lime, Orange, Teal, Pink, Stone
 - **Section visibility** — Toggle class photo, gallery, message block, people list
 - **Image upload** — Upload photos directly (no paths)
 - **Custom labels** — Override labels per page
