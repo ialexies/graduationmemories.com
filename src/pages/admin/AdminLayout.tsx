@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = user?.role === 'admin';
 
   function handleLogout() {
     logout();
@@ -17,15 +18,25 @@ export function AdminLayout() {
           <Link to="/admin" className="font-semibold text-slate-800">
             Dashboard
           </Link>
-          <Link to="/admin/pages" className="text-slate-600 hover:text-slate-800">
-            Pages
+          <Link to="/admin/content" className="text-slate-600 hover:text-slate-800">
+            Content
           </Link>
-          <Link to="/admin/tokens" className="text-slate-600 hover:text-slate-800">
-            Tokens
+          <Link to="/admin/footer" className="text-slate-600 hover:text-slate-800">
+            Footer
           </Link>
-          <Link to="/admin/users" className="text-slate-600 hover:text-slate-800">
-            Users
-          </Link>
+          {isAdmin && (
+            <>
+              <Link to="/admin/pages" className="text-slate-600 hover:text-slate-800">
+                Pages
+              </Link>
+              <Link to="/admin/tokens" className="text-slate-600 hover:text-slate-800">
+                Tokens
+              </Link>
+              <Link to="/admin/users" className="text-slate-600 hover:text-slate-800">
+                Users
+              </Link>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-slate-500">{user?.email}</span>

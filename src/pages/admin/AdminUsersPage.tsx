@@ -22,6 +22,7 @@ export function AdminUsersPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState<'admin' | 'editor'>('admin');
   const [assignUserId, setAssignUserId] = useState<number | null>(null);
   const [assignPageId, setAssignPageId] = useState('');
 
@@ -47,7 +48,7 @@ export function AdminUsersPage() {
     try {
       const res = await apiFetch('/api/admin/users', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, role }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
@@ -55,6 +56,7 @@ export function AdminUsersPage() {
       setEmail('');
       setPassword('');
       setName('');
+      setRole('admin');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed');
     } finally {
@@ -114,6 +116,17 @@ export function AdminUsersPage() {
               className="px-3 py-2 border border-slate-300 rounded-lg"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Role</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as 'admin' | 'editor')}
+              className="px-3 py-2 border border-slate-300 rounded-lg"
+            >
+              <option value="admin">Admin</option>
+              <option value="editor">Editor</option>
+            </select>
           </div>
           <button
             type="submit"

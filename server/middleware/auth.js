@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { canEditPage } from '../db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
@@ -21,8 +22,27 @@ export function authMiddleware(req, res, next) {
 
 export function signToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email },
+    { id: user.id, email: user.email, role: user.role || 'admin' },
     JWT_SECRET,
     { expiresIn: '7d' }
   );
+}
+
+export function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+}
+
+export function requirePageAccess(pageIdParam = 'id') {
+  return (req, res, next) => {
+    const pageId = req.params[pageIdParam];
+    if (!pageId) return res.status(400).json({ error: 'Page ID required' });
+    const allowed = canEditPage(req.user.id, req.user.role, pageId);
+    if (!allowed) {
+      return res.status(403).json({ error: 'Access denied to this page' });
+    }
+    next();
+  };
 }

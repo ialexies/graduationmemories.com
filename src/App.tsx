@@ -5,10 +5,14 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { AccessDeniedPage } from './pages/AccessDeniedPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminProtectedRoute } from './pages/admin/AdminProtectedRoute';
+import { RequireAdmin } from './pages/admin/RequireAdmin';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminLayout } from './pages/admin/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminPagesPage } from './pages/admin/AdminPagesPage';
+import { AdminContentPage } from './pages/admin/AdminContentPage';
+import { PageContentEditor } from './pages/admin/PageContentEditor';
+import { FooterEditorPage } from './pages/admin/FooterEditorPage';
 import { AdminTokensPage } from './pages/admin/AdminTokensPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
@@ -56,9 +60,12 @@ function App() {
           <Route path="/admin" element={<AdminProtectedRoute />}>
             <Route element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
-              <Route path="pages" element={<AdminPagesPage />} />
-              <Route path="tokens" element={<AdminTokensPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="content" element={<AdminContentPage />} />
+              <Route path="content/:id" element={<PageContentEditor />} />
+              <Route path="footer" element={<FooterEditorPage />} />
+              <Route path="pages" element={<RequireAdmin><AdminPagesPage /></RequireAdmin>} />
+              <Route path="tokens" element={<RequireAdmin><AdminTokensPage /></RequireAdmin>} />
+              <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
             </Route>
           </Route>
         </Routes>
