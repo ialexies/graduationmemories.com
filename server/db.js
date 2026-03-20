@@ -102,6 +102,12 @@ export function initDb() {
   if (themeCols.length === 0) {
     db.exec('ALTER TABLE page_labels ADD COLUMN color_theme TEXT');
   }
+
+  // Migration: add teacher_audio to posts_content if missing
+  const audioCols = db.prepare("SELECT name FROM pragma_table_info('posts_content') WHERE name = 'teacher_audio'").all();
+  if (audioCols.length === 0) {
+    db.exec('ALTER TABLE posts_content ADD COLUMN teacher_audio TEXT');
+  }
 }
 
 export function seedDb() {
@@ -192,6 +198,7 @@ const DEFAULT_SECTION_VISIBILITY = {
   classPhoto: true,
   gallery: true,
   teacherMessage: true,
+  teacherAudio: true,
   peopleList: true,
   studentPhotos: false,
 };
@@ -333,6 +340,7 @@ export function getPostContent(pageId) {
     teacherName: row.teacher_name,
     teacherPhoto: row.teacher_photo,
     teacherTitle: row.teacher_title,
+    teacherAudio: row.teacher_audio || undefined,
     students: JSON.parse(row.students || '[]'),
     togetherSince: row.together_since,
   };
@@ -368,8 +376,8 @@ export function savePostContent(pageId, post) {
   db.prepare(`
     INSERT INTO posts_content (
       page_id, section_name, batch, location, quote, class_photo, gallery,
-      teacher_message, teacher_name, teacher_photo, teacher_title, students, together_since, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(page_id) DO UPDATE SET
       section_name = excluded.section_name,
       batch = excluded.batch,
@@ -381,6 +389,7 @@ export function savePostContent(pageId, post) {
       teacher_name = excluded.teacher_name,
       teacher_photo = excluded.teacher_photo,
       teacher_title = excluded.teacher_title,
+      teacher_audio = excluded.teacher_audio,
       students = excluded.students,
       together_since = excluded.together_since,
       updated_at = datetime('now')
@@ -396,6 +405,7 @@ export function savePostContent(pageId, post) {
     post.teacherName ?? '',
     post.teacherPhoto || null,
     post.teacherTitle ?? '',
+    post.teacherAudio || null,
     JSON.stringify(post.students || []),
     post.togetherSince ?? ''
   );

@@ -24,6 +24,7 @@ const SECTION_OPTIONS: { key: keyof SectionVisibility; label: string }[] = [
   { key: "classPhoto", label: "Class / cover photo" },
   { key: "gallery", label: "Image gallery" },
   { key: "teacherMessage", label: "Message block" },
+  { key: "teacherAudio", label: "Teacher voice recording (MP3)" },
   { key: "peopleList", label: "People list (students/guests)" },
   { key: "studentPhotos", label: "Student profile photos" },
 ];
@@ -88,6 +89,82 @@ function ImagePreview({
           onError={() => setErrored(true)}
         />
       )}
+    </div>
+  );
+}
+
+function AudioUploadSlot({
+  src,
+  onRemove,
+  onFileChange,
+  label,
+  uploading,
+  inputRef,
+  error: slotError,
+}: {
+  src: string;
+  onRemove: () => void;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  label: string;
+  uploading: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  error?: string;
+}) {
+  const hasAudio = !!src?.trim();
+  return (
+    <div className="space-y-2">
+      <label className={labelClass}>{label}</label>
+      {slotError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+          {slotError}
+        </div>
+      )}
+      <p className="text-xs text-slate-500">
+        MP3 only, max 3 minutes, max 5MB. Autoplays on the memory page.
+      </p>
+      <div className="flex items-center gap-4">
+        {hasAudio ? (
+          <div className="flex items-center gap-3">
+            <audio src={src} controls className="h-10 max-w-[240px]" />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+                className="text-sm py-1.5 px-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50"
+              >
+                {uploading ? "Uploading…" : "Replace"}
+              </button>
+              <button
+                type="button"
+                onClick={onRemove}
+                disabled={uploading}
+                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                aria-label="Remove audio"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 text-sm"
+          >
+            {uploading ? "Uploading…" : "Upload MP3"}
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="audio/mpeg,audio/mp3,.mp3"
+          className="hidden"
+          aria-label={`Upload ${label}`}
+          onChange={onFileChange}
+        />
+      </div>
     </div>
   );
 }
@@ -182,11 +259,13 @@ export function PageContentEditor() {
   const [metaSaving, setMetaSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [audioError, setAudioError] = useState("");
   const classPhotoInputRef = useRef<HTMLInputElement>(null);
   const teacherPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const studentPhotoInputRef = useRef<HTMLInputElement>(null);
   const studentPhotoTargetRef = useRef<number | null>(null);
+  const teacherAudioInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -312,6 +391,28 @@ export function PageContentEditor() {
     return data.path as string;
   }
 
+  async function uploadAudio(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await apiFetch(`/api/admin/pages/${id}/upload-audio`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = `Upload failed (${res.status})`;
+      try {
+        const data = JSON.parse(text);
+        if (typeof data?.error === "string") msg = data.error;
+      } catch {
+        if (text) msg = text;
+      }
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    return data.path as string;
+  }
+
   async function handleClassPhotoUpload(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -386,6 +487,52 @@ export function PageContentEditor() {
       updateStudent(idx, "photo", path);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleTeacherAudioUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file || !post || !id) return;
+    input.value = "";
+    setUploading(true);
+    setError("");
+    setAudioError("");
+    try {
+      const path = await uploadAudio(file);
+      update("teacherAudio", path);
+      setAudioError("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      setError(msg);
+      setAudioError(msg);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemoveTeacherAudio() {
+    if (!id) return;
+    setUploading(true);
+    setError("");
+    setAudioError("");
+    try {
+      const res = await apiFetch(`/api/admin/pages/${id}/audio`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || "Failed to remove audio");
+      }
+      const data = await res.json();
+      setPost(data);
+      setAudioError("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to remove audio";
+      setError(msg);
+      setAudioError(msg);
     } finally {
       setUploading(false);
     }
@@ -874,6 +1021,17 @@ export function PageContentEditor() {
                 required
               />
             </div>
+            {sectionVisibility.teacherAudio !== false && (
+              <AudioUploadSlot
+                src={post.teacherAudio || ""}
+                onRemove={handleRemoveTeacherAudio}
+                onFileChange={handleTeacherAudioUpload}
+                label="Teacher voice recording"
+                uploading={uploading}
+                inputRef={teacherAudioInputRef}
+                error={audioError}
+              />
+            )}
           </div>
         )}
 

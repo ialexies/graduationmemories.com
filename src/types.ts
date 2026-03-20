@@ -67,6 +67,7 @@ export interface SectionVisibility {
   classPhoto?: boolean;
   gallery?: boolean;
   teacherMessage?: boolean;
+  teacherAudio?: boolean;
   peopleList?: boolean;
   studentPhotos?: boolean;
 }
@@ -88,6 +89,7 @@ export interface Post {
   teacherName: string;
   teacherPhoto?: string;
   teacherTitle: string;
+  teacherAudio?: string;
   students: Student[];
   togetherSince: string;
 }

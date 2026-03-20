@@ -74,7 +74,7 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
         setFooter(data.footer);
         setType(data.type || 'graduation');
         setLabels(data.labels || DEFAULT_LABELS);
-        setSectionVisibility(data.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true, studentPhotos: false });
+        setSectionVisibility(data.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, teacherAudio: true, peopleList: true, studentPhotos: false });
         setColorTheme(data.colorTheme || 'default');
         sessionStorage.setItem(`gm_token_${pageId}`, token);
         window.history.replaceState(null, '', `/${pageId}`);

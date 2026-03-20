@@ -11,6 +11,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - DB_PATH=/data/gradmemories.db
+      - ASSETS_PATH=/data/assets
       - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
 
 volumes:

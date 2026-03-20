@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import sharp from 'sharp';
+import { parseFile } from 'music-metadata';
 import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
@@ -48,7 +49,7 @@ app.get('/api/pages/:id', (req, res) => {
     footer,
     type: meta?.type || 'graduation',
     labels: meta?.labels || {},
-    sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true, studentPhotos: false },
+    sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, teacherAudio: true, peopleList: true, studentPhotos: false },
     colorTheme: meta?.colorTheme || 'default',
   });
 });
@@ -103,8 +104,8 @@ app.put('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
   }
 });
 
-// Image upload: stores in public/assets/{pageId}/, returns path e.g. /assets/h322x/class-photo.jpg
-const uploadDir = join(__dirname, '..', 'public', 'assets');
+// Image/audio upload: use ASSETS_PATH in production (e.g. Docker volume) for persistence
+const uploadDir = process.env.ASSETS_PATH || join(__dirname, '..', 'public', 'assets');
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
@@ -124,6 +125,24 @@ const upload = multer({
     const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
     cb(null, ok);
   },
+});
+
+const MAX_AUDIO_DURATION_SEC = 180; // 3 minutes
+const MAX_AUDIO_SIZE = 5 * 1024 * 1024; // 5MB
+const uploadAudio = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const pageId = req.params.id;
+      const dir = join(uploadDir, pageId);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+      const base = 'teacher-audio';
+      cb(null, `${base}-${Date.now()}.mp3`);
+    },
+  }),
+  limits: { fileSize: MAX_AUDIO_SIZE },
 });
 
 const MAX_IMAGE_DIMENSION = 2048;
@@ -183,6 +202,69 @@ app.post('/api/admin/pages/:id/upload', requirePageAccess('id'), (req, res, next
       res.status(500).json({ error: err.message || 'Upload failed' });
     }
   });
+});
+
+app.post('/api/admin/pages/:id/upload-audio', requirePageAccess('id'), (req, res, next) => {
+  uploadAudio.single('file')(req, res, async (multerErr) => {
+    try {
+      if (multerErr) {
+        console.error('Audio multer error:', multerErr.message, multerErr.code);
+        let msg = multerErr.message || 'Upload failed. Max 5MB.';
+        if (multerErr.code === 'LIMIT_FILE_SIZE') msg = 'File too large. Maximum 5MB.';
+        if (multerErr.code === 'LIMIT_UNEXPECTED_FILE') msg = 'Unexpected field. Use field name "file".';
+        return res.status(400).json({ error: msg });
+      }
+      if (!req.file) {
+        console.error('Audio upload: no file in request');
+        return res.status(400).json({ error: 'No file uploaded. Please select an MP3 file.' });
+      }
+      const filePath = req.file.path;
+      try {
+        const metadata = await parseFile(filePath);
+        const durationSec = metadata.format?.duration ?? 0;
+        if (durationSec > MAX_AUDIO_DURATION_SEC) {
+          unlinkSync(filePath);
+          return res.status(400).json({
+            error: `Audio too long. Maximum ${MAX_AUDIO_DURATION_SEC / 60} minutes. Your file: ${Math.ceil(durationSec / 60)} min.`,
+          });
+        }
+      } catch (err) {
+        console.warn('Audio metadata parse failed (accepting file):', err?.message);
+        // Accept file anyway - some MP3 variants may not parse; duration check skipped
+      }
+      // Remove old audio file when replacing
+      const content = getPostContent(req.params.id);
+      const oldPath = content?.teacherAudio;
+      if (oldPath && oldPath.startsWith('/assets/')) {
+        const fullPath = join(__dirname, '..', 'public', oldPath.replace(/^\//, ''));
+        if (existsSync(fullPath)) unlinkSync(fullPath);
+      }
+      const path = `/assets/${req.params.id}/${req.file.filename}`;
+      res.json({ path });
+    } catch (err) {
+      console.error('Audio upload error:', err);
+      if (req.file?.path && existsSync(req.file.path)) unlinkSync(req.file.path);
+      res.status(500).json({ error: err.message || 'Upload failed' });
+    }
+  });
+});
+
+app.delete('/api/admin/pages/:id/audio', requirePageAccess('id'), (req, res) => {
+  try {
+    const { id } = req.params;
+    const content = getPostContent(id);
+    const oldPath = content?.teacherAudio;
+    if (oldPath && oldPath.startsWith('/assets/')) {
+      const fullPath = join(__dirname, '..', 'public', oldPath.replace(/^\//, ''));
+      if (existsSync(fullPath)) unlinkSync(fullPath);
+    }
+    const updated = { ...content, teacherAudio: undefined };
+    savePostContent(id, updated);
+    res.json(getPostContent(id));
+  } catch (err) {
+    console.error('Delete audio error:', err);
+    res.status(500).json({ error: err.message || 'Failed to remove audio' });
+  }
 });
 
 app.get('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
@@ -324,8 +406,8 @@ app.post('/api/admin/assign', requireAdmin, (req, res) => {
   }
 });
 
-// Serve uploaded assets (public/assets) so /assets/pageId/file.jpg works
-const assetsPath = join(__dirname, '..', 'public', 'assets');
+// Serve uploaded assets so /assets/pageId/file.jpg works
+const assetsPath = process.env.ASSETS_PATH || join(__dirname, '..', 'public', 'assets');
 if (!existsSync(assetsPath)) mkdirSync(assetsPath, { recursive: true });
 app.use('/assets', express.static(assetsPath));
 

@@ -12,13 +12,17 @@
 docker compose up -d --build
 ```
 
-Exposes the app on port 8084. Set `JWT_SECRET` in `.env` for production:
+Exposes the app on port 8084.
 
-```bash
-JWT_SECRET=your-random-secret-here
-```
+**Before going live:**
 
-SQLite data persists in the `graduationmemories-data` volume. Uploaded images are stored in `public/assets/{pageId}/` and served at `/assets/`.
+1. Set `JWT_SECRET` in `.env` (or as env var):
+   ```bash
+   JWT_SECRET=your-random-secret-here
+   ```
+2. Change the default admin password (`admin@gradmemories.local` / `admin123`) in the CMS after first login.
+
+SQLite data and uploaded assets (images, audio) persist in the `graduationmemories-data` volume. Assets are stored in `/data/assets/{pageId}/` and served at `/assets/`.
 
 ## Manual deployment
 
