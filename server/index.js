@@ -1,14 +1,15 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync, copyFileSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import sharp from 'sharp';
 import { parseFile } from 'music-metadata';
-import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage, VALID_PAGE_TYPES } from './db.js';
+import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage, duplicatePage, VALID_PAGE_TYPES } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -19,6 +20,22 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '5mb' }));
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts, try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
@@ -54,7 +71,9 @@ app.get('/api/pages/:id', (req, res) => {
   });
 });
 
-app.post('/api/admin/login', (req, res) => {
+app.use('/api/', apiLimiter);
+
+app.post('/api/admin/login', loginLimiter, (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
@@ -121,6 +140,33 @@ app.post('/api/admin/pages', requireAdmin, (req, res) => {
   } catch (err) {
     console.error('POST /api/admin/pages error:', err);
     res.status(500).json({ error: err.message || 'Failed to create page' });
+  }
+});
+
+app.post('/api/admin/pages/:id/duplicate', requireAdmin, requirePageAccess('id'), (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newId } = req.body;
+    if (!newId || typeof newId !== 'string') {
+      return res.status(400).json({ error: 'newId is required' });
+    }
+    const trimmed = newId.trim();
+    if (trimmed.length < 3 || trimmed.length > 20) {
+      return res.status(400).json({ error: 'Page ID must be 3–20 characters' });
+    }
+    if (!/^[a-zA-Z0-9-]+$/.test(trimmed)) {
+      return res.status(400).json({ error: 'Page ID can only contain letters, numbers, and hyphens' });
+    }
+    const result = duplicatePage(id, trimmed);
+    if (!result.ok) {
+      return res.status(400).json({ error: result.error });
+    }
+    db.prepare('INSERT OR IGNORE INTO page_assignments (user_id, page_id) VALUES (?, ?)').run(req.user.id, trimmed);
+    const page = db.prepare('SELECT * FROM pages WHERE id = ?').get(trimmed);
+    res.status(201).json(page);
+  } catch (err) {
+    console.error('POST duplicate error:', err);
+    res.status(500).json({ error: err.message || 'Failed to duplicate' });
   }
 });
 

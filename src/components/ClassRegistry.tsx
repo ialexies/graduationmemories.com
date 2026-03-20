@@ -22,6 +22,7 @@ function StudentAvatar({ src }: { src: string }) {
         backgroundColor: 'color-mix(in srgb, var(--theme-accent) 25%, transparent)',
         boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.25)',
       }}
+      loading="lazy"
       onError={() => setErrored(true)}
     />
   );

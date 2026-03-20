@@ -309,6 +309,47 @@ export function createPage(pageId, type = 'event') {
   `).run(pageId);
 }
 
+export function duplicatePage(sourceId, newId) {
+  const source = db.prepare('SELECT * FROM pages WHERE id = ?').get(sourceId);
+  if (!source) return { ok: false, error: 'Source page not found' };
+  const exists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(newId);
+  if (exists) return { ok: false, error: 'A page with this ID already exists' };
+  const content = db.prepare('SELECT * FROM posts_content WHERE page_id = ?').get(sourceId);
+  const labels = db.prepare('SELECT * FROM page_labels WHERE page_id = ?').get(sourceId);
+
+  db.prepare('INSERT INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(newId, source.type || 'event');
+  if (content) {
+    db.prepare(`
+      INSERT INTO posts_content (page_id, section_name, batch, location, quote, class_photo, gallery,
+        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      newId, content.section_name, content.batch, content.location, content.quote,
+      content.class_photo, content.gallery, content.teacher_message, content.teacher_name,
+      content.teacher_photo, content.teacher_title, content.teacher_audio || null,
+      content.students, content.together_since
+    );
+  } else {
+    db.prepare(`
+      INSERT INTO posts_content (page_id, section_name, batch, location, quote, class_photo, gallery,
+        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since)
+      VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, '[]', '')
+    `).run(newId);
+  }
+  if (labels) {
+    const l = labels;
+    db.prepare(`
+      INSERT INTO page_labels (page_id, theme_label, title_label, subtitle_label, people_label, people_tag_label,
+        message_label, message_author_label, section_visibility, color_theme)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      newId, l.theme_label, l.title_label, l.subtitle_label, l.people_label, l.people_tag_label,
+      l.message_label, l.message_author_label, l.section_visibility, l.color_theme
+    );
+  }
+  return { ok: true };
+}
+
 export function getPageLabels(pageId) {
   const page = db.prepare('SELECT type FROM pages WHERE id = ?').get(pageId);
   if (!page) return null;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
+import { Skeleton } from '../../components/Skeleton';
 import type { Footer } from '../../types';
 
 const inputClass =
@@ -46,7 +47,13 @@ export function FooterEditorPage() {
     }
   }
 
-  if (loading) return <div className="text-slate-500">Loading...</div>;
+  if (loading) return (
+    <div className="max-w-xl space-y-4">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-4 w-96" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+    </div>
+  );
   if (error && !footer) return <div className="text-red-500">{error}</div>;
   if (!footer) return null;
 

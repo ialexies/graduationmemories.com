@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface ImageSliderProps {
   images: string[];
@@ -12,21 +12,80 @@ export function ImageSlider({
   autoPlayInterval = 4000,
 }: ImageSliderProps) {
   const [current, setCurrent] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const goNext = useCallback(() => {
+    if (images.length <= 1) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrent((i) => (i + 1) % images.length);
+      setIsTransitioning(false);
+    }, 220);
+  }, [images.length]);
+
+  const goPrev = useCallback(() => {
+    if (images.length <= 1) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrent((i) => (i - 1 + images.length) % images.length);
+      setIsTransitioning(false);
+    }, 220);
+  }, [images.length]);
 
   useEffect(() => {
     if (images.length <= 1) return;
-    const id = setInterval(
-      () => setCurrent((i) => (i + 1) % images.length),
-      autoPlayInterval
-    );
+    const id = setInterval(goNext, autoPlayInterval);
     return () => clearInterval(id);
-  }, [images.length, autoPlayInterval]);
+  }, [images.length, autoPlayInterval, goNext]);
 
-  if (!images.length) return null;
+  // Preload next and previous images
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const nextIdx = (current + 1) % images.length;
+    const prevIdx = (current - 1 + images.length) % images.length;
+    [images[nextIdx], images[prevIdx]].forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [images, current]);
 
-  const goNext = () => setCurrent((i) => (i + 1) % images.length);
-  const goPrev = () =>
-    setCurrent((i) => (i - 1 + images.length) % images.length);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goNext() : goPrev();
+    }
+  };
+
+  if (!images.length) {
+    return (
+      <section className="mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="p-2 rounded-lg bg-slate-100"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 12%, rgb(241 245 249))', color: 'var(--theme-accent)' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
+        </div>
+        <div className="rounded-2xl overflow-hidden shadow-lg border-4 border-white aspect-[4/3] bg-slate-100 flex items-center justify-center">
+          <p className="text-slate-500 text-sm">No images yet</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-10">
@@ -52,17 +111,24 @@ export function ImageSlider({
         </div>
         <h2 className="text-2xl font-bold text-slate-800">{title}</h2>
       </div>
-      <div className="rounded-2xl overflow-hidden shadow-lg border-4 border-white relative aspect-[4/3] bg-slate-200">
+      <div
+        className="rounded-2xl overflow-hidden shadow-lg border-4 border-white relative aspect-[4/3] bg-slate-200 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={images[current]}
           alt={`${title} ${current + 1}`}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-smooth ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+          loading={current === 0 ? 'eager' : 'lazy'}
         />
         {images.length > 1 && (
           <>
             <button
               type="button"
               onClick={goPrev}
+              disabled={isTransitioning}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Previous image"
             >
@@ -84,6 +150,7 @@ export function ImageSlider({
             <button
               type="button"
               onClick={goNext}
+              disabled={isTransitioning}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Next image"
             >

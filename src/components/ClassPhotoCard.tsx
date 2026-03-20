@@ -12,6 +12,7 @@ export function ClassPhotoCard({ classPhoto, batch, location }: ClassPhotoCardPr
           src={classPhoto}
           alt="Main photo"
           className="w-full h-full object-cover"
+          loading="lazy"
         />
       </div>
       <div className="py-4 px-2 flex justify-between items-center text-sm font-medium">

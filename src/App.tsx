@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route, useParams, useSearchParams } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { PageLoaderSkeleton } from './components/Skeleton';
+import { ToastProvider } from './contexts/ToastContext';
 import { usePost } from './hooks/usePost';
 import { PostPage } from './pages/PostPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -27,11 +30,7 @@ function PostRoute() {
   const { post, footer, labels, sectionVisibility, colorTheme, loading, error } = usePost(id, token);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500 animate-pulse">Loading...</div>
-      </div>
-    );
+    return <PageLoaderSkeleton />;
   }
 
   if (error) {
@@ -51,26 +50,30 @@ function RootRoute() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<RootRoute />} />
-          <Route path="/:id" element={<PostRoute />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<AdminProtectedRoute />}>
-            <Route element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="content" element={<AdminContentPage />} />
-              <Route path="content/:id" element={<PageContentEditor />} />
-              <Route path="footer" element={<FooterEditorPage />} />
-              <Route path="pages" element={<RequireAdmin><AdminPagesPage /></RequireAdmin>} />
-              <Route path="tokens" element={<RequireAdmin><AdminTokensPage /></RequireAdmin>} />
-              <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
-            </Route>
-          </Route>
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <Routes>
+              <Route path="/" element={<RootRoute />} />
+              <Route path="/:id" element={<PostRoute />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/admin" element={<AdminProtectedRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="content" element={<AdminContentPage />} />
+                  <Route path="content/:id" element={<PageContentEditor />} />
+                  <Route path="footer" element={<FooterEditorPage />} />
+                  <Route path="pages" element={<RequireAdmin><AdminPagesPage /></RequireAdmin>} />
+                  <Route path="tokens" element={<RequireAdmin><AdminTokensPage /></RequireAdmin>} />
+                  <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
+                </Route>
+              </Route>
+            </Routes>
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

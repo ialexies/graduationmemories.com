@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
+import { TableSkeleton } from '../../components/Skeleton';
 
 interface User {
   id: number;
@@ -79,7 +80,7 @@ export function AdminUsersPage() {
     alert('Page assigned');
   }
 
-  if (loading) return <div className="text-slate-500">Loading...</div>;
+  if (loading) return <TableSkeleton rows={6} />;
 
   return (
     <div>

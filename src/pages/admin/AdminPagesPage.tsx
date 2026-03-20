@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { TableSkeleton } from '../../components/Skeleton';
+import { useToast } from '../../contexts/ToastContext';
 import type { PageType } from '../../types';
 
 interface Page {
@@ -24,6 +27,14 @@ function generatePageId(): string {
   return result;
 }
 
+function validatePageId(id: string): string | null {
+  const t = id.trim();
+  if (!t) return 'Required';
+  if (t.length < 3 || t.length > 20) return '3–20 characters';
+  if (!/^[a-zA-Z0-9-]+$/.test(t)) return 'Letters, numbers, hyphens only';
+  return null;
+}
+
 export function AdminPagesPage() {
   const [pages, setPages] = useState<Page[]>([]);
   const [tokensByPage, setTokensByPage] = useState<Record<string, string>>({});
@@ -35,6 +46,27 @@ export function AdminPagesPage() {
   const [createError, setCreateError] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createdPageId, setCreatedPageId] = useState<string | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<Page | null>(null);
+  const [duplicateNewId, setDuplicateNewId] = useState('');
+  const [duplicateError, setDuplicateError] = useState('');
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
+
+  const createModalRef = useFocusTrap(showCreateModal);
+  const duplicateModalRef = useFocusTrap(!!duplicateSource);
+  const { addToast } = useToast();
+  const createPageIdInputRef = useRef<HTMLInputElement>(null);
+  const duplicateNewIdInputRef = useRef<HTMLInputElement>(null);
+
+  const createPageIdError = validatePageId(createPageId);
+  const duplicateNewIdError = duplicateSource ? validatePageId(duplicateNewId) : null;
+
+  useEffect(() => {
+    if (createError) createPageIdInputRef.current?.focus();
+  }, [createError]);
+
+  useEffect(() => {
+    if (duplicateError) duplicateNewIdInputRef.current?.focus();
+  }, [duplicateError]);
 
   function loadData() {
     Promise.all([
@@ -58,7 +90,9 @@ export function AdminPagesPage() {
   }, []);
 
   async function toggleEnabled(page: Page) {
-    const enabled = page.enabled === 1 ? false : true;
+    const enabling = page.enabled !== 1;
+    if (!enabling && !window.confirm(`Disable "${page.label?.trim() || page.id}"? The page will no longer be accessible.`)) return;
+    const enabled = enabling;
     const res = await apiFetch(`/api/admin/pages/${page.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ enabled }),
@@ -111,7 +145,44 @@ export function AdminPagesPage() {
     }
   }
 
-  if (loading) return <div className="text-slate-500">Loading...</div>;
+  function openDuplicateModal(page: Page) {
+    setDuplicateSource(page);
+    setDuplicateNewId(`${page.id}-copy`);
+    setDuplicateError('');
+  }
+
+  function closeDuplicateModal() {
+    setDuplicateSource(null);
+    setDuplicateNewId('');
+    setDuplicateError('');
+    setDuplicateLoading(false);
+  }
+
+  async function handleDuplicate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!duplicateSource) return;
+    setDuplicateError('');
+    setDuplicateLoading(true);
+    try {
+      const res = await apiFetch(`/api/admin/pages/${duplicateSource.id}/duplicate`, {
+        method: 'POST',
+        body: JSON.stringify({ newId: duplicateNewId.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to duplicate (${res.status})`);
+      }
+      addToast(`Page duplicated as "${duplicateNewId.trim()}"`, 'success');
+      loadData();
+      closeDuplicateModal();
+    } catch (err) {
+      setDuplicateError(err instanceof Error ? err.message : 'Failed to duplicate');
+    } finally {
+      setDuplicateLoading(false);
+    }
+  }
+
+  if (loading) return <TableSkeleton rows={8} />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -177,7 +248,7 @@ export function AdminPagesPage() {
                       {page.enabled === 1 ? 'Enabled' : 'Disabled'}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 flex flex-wrap gap-3">
                     <button
                       onClick={() => toggleEnabled(page)}
                       className={`text-sm font-medium ${
@@ -187,6 +258,13 @@ export function AdminPagesPage() {
                       }`}
                     >
                       {page.enabled === 1 ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDuplicateModal(page)}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    >
+                      Duplicate
                     </button>
                   </td>
                 </tr>
@@ -198,7 +276,7 @@ export function AdminPagesPage() {
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-scale-in">
+          <div ref={createModalRef} className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-scale-in">
             <h2 className="text-xl font-bold text-slate-800 mb-4">Create new page</h2>
             {createdPageId ? (
               <div>
@@ -236,13 +314,18 @@ export function AdminPagesPage() {
                   </label>
                   <div className="flex gap-2">
                     <input
+                      ref={createPageIdInputRef}
                       id="create-page-id"
                       type="text"
                       value={createPageId}
                       onChange={(e) => setCreatePageId(e.target.value)}
                       placeholder="batch2026 or event-march"
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                        createPageIdError ? 'border-red-400 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+                      }`}
                       required
+                      aria-invalid={!!createPageIdError}
+                      aria-describedby={createPageIdError ? 'create-page-id-error' : undefined}
                     />
                     <button
                       type="button"
@@ -252,7 +335,11 @@ export function AdminPagesPage() {
                       Auto-generate
                     </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">3–20 characters, letters, numbers, hyphens only</p>
+                  {createPageIdError ? (
+                    <p id="create-page-id-error" className="text-xs text-red-600 mt-1">{createPageIdError}</p>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-1">3–20 characters, letters, numbers, hyphens only</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="create-page-type" className="block text-sm font-medium text-slate-700 mb-1">
@@ -299,6 +386,73 @@ export function AdminPagesPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {duplicateSource && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div ref={duplicateModalRef} className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 animate-scale-in">
+            <h2 className="text-xl font-bold text-slate-800 mb-4">Duplicate page</h2>
+            <p className="text-slate-600 text-sm mb-4">
+              Copy &quot;{duplicateSource.label?.trim() || duplicateSource.id}&quot; to a new page. Content and settings will be copied.
+            </p>
+            <form onSubmit={handleDuplicate} className="space-y-4">
+              <div>
+                <label htmlFor="duplicate-new-id" className="block text-sm font-medium text-slate-700 mb-1">
+                  New page ID *
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    ref={duplicateNewIdInputRef}
+                    id="duplicate-new-id"
+                    type="text"
+                    value={duplicateNewId}
+                    onChange={(e) => setDuplicateNewId(e.target.value)}
+                    placeholder="batch2026-copy"
+                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      duplicateNewIdError ? 'border-red-400 focus:border-red-500' : 'border-slate-300 focus:border-blue-500'
+                    }`}
+                    required
+                    aria-invalid={!!duplicateNewIdError}
+                    aria-describedby={duplicateNewIdError ? 'duplicate-new-id-error' : undefined}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateNewId(`${duplicateSource.id}-copy`)}
+                    className="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium"
+                  >
+                    Reset
+                  </button>
+                </div>
+                {duplicateNewIdError ? (
+                  <p id="duplicate-new-id-error" className="text-xs text-red-600 mt-1">{duplicateNewIdError}</p>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-1">3–20 characters, letters, numbers, hyphens only</p>
+                )}
+              </div>
+              {duplicateError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+                  {duplicateError}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={duplicateLoading || !duplicateNewId.trim() || !!duplicateNewIdError}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-smooth btn-press"
+                >
+                  {duplicateLoading ? 'Duplicating…' : 'Duplicate'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeDuplicateModal}
+                  className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

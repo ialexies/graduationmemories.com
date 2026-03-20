@@ -31,6 +31,7 @@ export function TeacherMessage({
             src={teacherPhoto}
             alt={teacherName}
             className="w-20 h-20 rounded-full object-cover border-4 border-slate-100 shadow-md"
+            loading="lazy"
           />
         )}
         <p className="text-slate-600 leading-relaxed italic text-center text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>

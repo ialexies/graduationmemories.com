@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { apiFetch } from "../../lib/api";
+import { Skeleton } from "../../components/Skeleton";
 import { THEME_OPTIONS, getThemeColors } from "../../lib/themePresets";
 import type {
   Post,
@@ -287,10 +288,16 @@ export function PageContentEditor() {
   const [metaSaved, setMetaSaved] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const errorBannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (error) errorBannerRef.current?.focus();
+  }, [error]);
+
   const [saving, setSaving] = useState(false);
   const [metaSaving, setMetaSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
   const [audioError, setAudioError] = useState("");
   const classPhotoInputRef = useRef<HTMLInputElement>(null);
   const teacherPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -668,7 +675,14 @@ export function PageContentEditor() {
     }
   }
 
-  if (loading) return <div className="text-slate-500">Loading...</div>;
+  if (loading) return (
+    <div className="space-y-6 max-w-3xl">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-48 w-full rounded-xl" />
+    </div>
+  );
   if (error && !post) {
     const isNetworkError =
       error.toLowerCase().includes("fetch") ||
@@ -716,7 +730,12 @@ export function PageContentEditor() {
 
       <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 animate-slide-up">
+          <div
+            ref={errorBannerRef}
+            tabIndex={-1}
+            role="alert"
+            className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 animate-slide-up outline-none focus:ring-2 focus:ring-red-400"
+          >
             <p className="font-medium">{error}</p>
             {error.toLowerCase().includes("fetch") && (
               <p className="text-sm mt-1">

@@ -23,7 +23,7 @@ npm run dev          # Vite on port 5173
 
 ## Features
 
-- **Page types** — Graduation, Wedding, Event
+- **Page types** — Birthday, Anniversary, Reunion, Retirement, Baby shower, Farewell, Engagement, Graduation, Wedding, Event
 - **Per-page color themes** — 50 themes to choose from
 - **Section visibility** — Toggle class photo, gallery, message block, people list
 - **Image upload** — Upload photos directly (no paths)

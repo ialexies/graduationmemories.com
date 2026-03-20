@@ -8,7 +8,7 @@ export function AdminProtectedRoute() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-slate-500">Loading...</div>
+        <div className="animate-pulse rounded bg-slate-200 h-4 w-24" aria-hidden />
       </div>
     );
   }

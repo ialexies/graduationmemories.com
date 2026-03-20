@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../../lib/api';
+import { TableSkeleton } from '../../components/Skeleton';
 
 interface Page {
   id: string;
@@ -21,7 +22,7 @@ export function AdminContentPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-slate-500 animate-pulse">Loading...</div>;
+  if (loading) return <TableSkeleton rows={6} />;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
