@@ -1,68 +1,43 @@
 # Deployment: gradmemories.lexserver.org
 
-## Build (no Docker)
+## Architecture
 
-```bash
-npm run build
-```
+- **Frontend:** React SPA (served by Node)
+- **Backend:** Node.js/Express with SQLite
+- **Auth:** Token in URL for pages; JWT for admin
 
-Deploy the `dist/` folder to your server.
-
-## SPA routing (required)
-
-The app uses client-side routing. The server must serve `index.html` for all routes so React Router can handle them.
-
-### Nginx
-
-```nginx
-location / {
-    root /path/to/dist;
-    try_files $uri $uri/ /index.html;
-}
-```
-
-### Apache (.htaccess in dist/)
-
-```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
-</IfModule>
-```
-
-## Subdomain
-
-Configure DNS: point `gradmemories.lexserver.org` to your server.
-
-## NFC URLs
-
-Each NFC card stores a full URL, e.g. `https://gradmemories.lexserver.org/h322x`
-
-## Docker deployment (home server)
-
-Prereqs on the server:
-
-- Docker (and optionally Docker Compose)
-- Git or some way to copy this repo onto the server
-
-### Build & run with Docker only
-
-```bash
-docker build -t graduationmemories .
-docker run -d --name graduationmemories -p 8080:80 --restart unless-stopped graduationmemories
-```
-
-Then open `http://<server-ip>:8080` in your browser.
-
-### Build & run with docker-compose
+## Docker deployment (recommended)
 
 ```bash
 docker compose up -d --build
 ```
 
-This will expose the app on port `8080` of the server.
+Exposes the app on port 8084. Set `JWT_SECRET` in `.env` for production:
+
+```bash
+JWT_SECRET=your-random-secret-here
+```
+
+SQLite data persists in the `graduationmemories-data` volume.
+
+## Manual deployment
+
+1. Build frontend: `npm run build`
+2. Install server deps: `cd server && npm ci`
+3. Run server: `node server/index.js` (from project root)
+4. Server serves `dist/` and handles `/api` routes. Default port 3001 (or set `PORT`).
+
+## NFC URLs
+
+Each NFC card stores a full URL with token, e.g.:
+
+```
+https://gradmemories.lexserver.org/h322x?t=YOUR_TOKEN_HERE
+```
+
+Create tokens in Admin > Tokens. Default admin: `admin@gradmemories.local` / `admin123` (change after first login).
+
+## Subdomain
+
+Point `gradmemories.lexserver.org` to your server. Use a reverse proxy (Nginx) to forward to port 3000/8084 if needed.
 

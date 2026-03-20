@@ -1,21 +1,31 @@
-FROM node:22-alpine AS build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Build frontend
 COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
 RUN npm run build
 
-# ---
-# Runtime image: Nginx serving the built static files
-FROM nginx:stable-alpine
+# Install server deps
+WORKDIR /app/server
+COPY server/package.json ./
+RUN npm ci --omit=dev
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+# Runtime
+FROM node:20-alpine
 
-EXPOSE 80
+WORKDIR /app
 
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=build /app/server ./server
+COPY --from=build /app/public ./public
+COPY --from=build /app/dist ./dist
 
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+CMD ["node", "server/index.js"]

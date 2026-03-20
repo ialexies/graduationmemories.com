@@ -1,11 +1,22 @@
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
-import { usePosts } from './hooks/usePosts';
+import { BrowserRouter, Routes, Route, useParams, useSearchParams } from 'react-router-dom';
+import { usePost } from './hooks/usePost';
 import { PostPage } from './pages/PostPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AccessDeniedPage } from './pages/AccessDeniedPage';
+import { AuthProvider } from './contexts/AuthContext';
+import { AdminProtectedRoute } from './pages/admin/AdminProtectedRoute';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminLayout } from './pages/admin/AdminLayout';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminPagesPage } from './pages/admin/AdminPagesPage';
+import { AdminTokensPage } from './pages/admin/AdminTokensPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
 function PostRoute() {
   const { id } = useParams<{ id: string }>();
-  const { loading, error, getPost, getFooter } = usePosts();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('t');
+  const { post, footer, loading, error } = usePost(id, token);
 
   if (loading) {
     return (
@@ -16,22 +27,11 @@ function PostRoute() {
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-red-500">Failed to load content.</div>
-      </div>
-    );
+    return <AccessDeniedPage reason={error} />;
   }
-
-  if (!id) {
-    return <NotFoundPage />;
-  }
-
-  const post = getPost(id);
-  const footer = getFooter();
 
   if (!post || !footer) {
-    return <NotFoundPage />;
+    return <AccessDeniedPage reason="not_found" />;
   }
 
   return <PostPage post={post} footer={footer} />;
@@ -44,10 +44,21 @@ function RootRoute() {
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<RootRoute />} />
-        <Route path="/:id" element={<PostRoute />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<RootRoute />} />
+          <Route path="/:id" element={<PostRoute />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin" element={<AdminProtectedRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="pages" element={<AdminPagesPage />} />
+              <Route path="tokens" element={<AdminTokensPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

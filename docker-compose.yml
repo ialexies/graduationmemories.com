@@ -4,7 +4,14 @@ services:
     container_name: graduationmemories
     restart: unless-stopped
     ports:
-      - "8084:80"
-    # If you ever want to serve behind a reverse proxy, you can
-    # remove the ports section and attach to the proxy's network instead.
+      - "8084:3000"
+    volumes:
+      - graduationmemories-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/gradmemories.db
+      - JWT_SECRET=${JWT_SECRET:-change-this-in-production}
 
+volumes:
+  graduationmemories-data:
