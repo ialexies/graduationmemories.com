@@ -24,7 +24,20 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS pages (
       id TEXT PRIMARY KEY,
       enabled INTEGER DEFAULT 1,
+      type TEXT DEFAULT 'graduation',
       created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS page_labels (
+      page_id TEXT PRIMARY KEY REFERENCES pages(id),
+      theme_label TEXT,
+      title_label TEXT,
+      subtitle_label TEXT,
+      people_label TEXT,
+      people_tag_label TEXT,
+      message_label TEXT,
+      message_author_label TEXT,
+      section_visibility TEXT
     );
 
     CREATE TABLE IF NOT EXISTS tokens (
@@ -71,6 +84,18 @@ export function initDb() {
       location TEXT NOT NULL
     );
   `);
+
+  // Migration: add type column to pages if missing (existing DBs)
+  const cols = db.prepare("SELECT name FROM pragma_table_info('pages') WHERE name = 'type'").all();
+  if (cols.length === 0) {
+    db.exec("ALTER TABLE pages ADD COLUMN type TEXT DEFAULT 'graduation'");
+  }
+
+  // Migration: add section_visibility to page_labels if missing
+  const labelCols = db.prepare("SELECT name FROM pragma_table_info('page_labels') WHERE name = 'section_visibility'").all();
+  if (labelCols.length === 0) {
+    db.exec('ALTER TABLE page_labels ADD COLUMN section_visibility TEXT');
+  }
 }
 
 export function seedDb() {
@@ -119,7 +144,6 @@ export function seedDb() {
       );
     }
   } else if (postsData.posts) {
-    // Backfill: add content for pages in posts.json that have no content yet
     const insertContent = db.prepare(`
       INSERT INTO posts_content (
         page_id, section_name, batch, location, quote, class_photo, gallery,
@@ -156,6 +180,116 @@ export function seedDb() {
       VALUES (1, ?, ?, ?, ?, ?)
     `).run(f.linkUrl || null, f.logo || null, f.shopName, f.tagline, f.location);
   }
+}
+
+const DEFAULT_SECTION_VISIBILITY = {
+  classPhoto: true,
+  gallery: true,
+  teacherMessage: true,
+  peopleList: true,
+};
+
+const DEFAULT_LABELS = {
+  graduation: {
+    themeLabel: 'Graduation Souvenir',
+    titleLabel: 'Section',
+    subtitleLabel: 'Batch',
+    peopleLabel: 'Class Registry',
+    peopleTagLabel: 'Honor',
+    messageLabel: 'Words from your Teacher',
+    messageAuthorLabel: 'Teacher',
+  },
+  wedding: {
+    themeLabel: 'Wedding Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Guests',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'From the Couple',
+    messageAuthorLabel: 'Couple',
+  },
+  event: {
+    themeLabel: 'Event Memories',
+    titleLabel: 'Event',
+    subtitleLabel: 'Date',
+    peopleLabel: 'Attendees',
+    peopleTagLabel: 'VIP',
+    messageLabel: 'Message from Host',
+    messageAuthorLabel: 'Host',
+  },
+};
+
+export function getPageLabels(pageId) {
+  const page = db.prepare('SELECT type FROM pages WHERE id = ?').get(pageId);
+  if (!page) return null;
+  const pageType = page.type || 'graduation';
+  const defaults = DEFAULT_LABELS[pageType] || DEFAULT_LABELS.graduation;
+  const overrides = db.prepare('SELECT * FROM page_labels WHERE page_id = ?').get(pageId);
+  if (!overrides) return { type: pageType, labels: defaults, sectionVisibility: DEFAULT_SECTION_VISIBILITY };
+  let sectionVisibility = DEFAULT_SECTION_VISIBILITY;
+  if (overrides.section_visibility) {
+    try {
+      sectionVisibility = { ...DEFAULT_SECTION_VISIBILITY, ...JSON.parse(overrides.section_visibility) };
+    } catch (_) {}
+  }
+  return {
+    type: pageType,
+    labels: {
+      themeLabel: overrides.theme_label ?? defaults.themeLabel,
+      titleLabel: overrides.title_label ?? defaults.titleLabel,
+      subtitleLabel: overrides.subtitle_label ?? defaults.subtitleLabel,
+      peopleLabel: overrides.people_label ?? defaults.peopleLabel,
+      peopleTagLabel: overrides.people_tag_label ?? defaults.peopleTagLabel,
+      messageLabel: overrides.message_label ?? defaults.messageLabel,
+      messageAuthorLabel: overrides.message_author_label ?? defaults.messageAuthorLabel,
+    },
+    sectionVisibility,
+  };
+}
+
+export function getPageMeta(pageId) {
+  const data = getPageLabels(pageId);
+  if (!data) return null;
+  return { type: data.type, labels: data.labels, sectionVisibility: data.sectionVisibility || DEFAULT_SECTION_VISIBILITY };
+}
+
+export function savePageMeta(pageId, meta) {
+  const page = db.prepare('SELECT id FROM pages WHERE id = ?').get(pageId);
+  if (!page) return false;
+  if (meta.type) {
+    db.prepare('UPDATE pages SET type = ? WHERE id = ?').run(meta.type, pageId);
+  }
+  if (meta.labels && typeof meta.labels === 'object') {
+    const l = meta.labels;
+    db.prepare(`
+      INSERT INTO page_labels (page_id, theme_label, title_label, subtitle_label, people_label, people_tag_label, message_label, message_author_label)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(page_id) DO UPDATE SET
+        theme_label = excluded.theme_label,
+        title_label = excluded.title_label,
+        subtitle_label = excluded.subtitle_label,
+        people_label = excluded.people_label,
+        people_tag_label = excluded.people_tag_label,
+        message_label = excluded.message_label,
+        message_author_label = excluded.message_author_label
+    `).run(
+      pageId,
+      l.themeLabel ?? null,
+      l.titleLabel ?? null,
+      l.subtitleLabel ?? null,
+      l.peopleLabel ?? null,
+      l.peopleTagLabel ?? null,
+      l.messageLabel ?? null,
+      l.messageAuthorLabel ?? null
+    );
+  }
+  if (meta.sectionVisibility && typeof meta.sectionVisibility === 'object') {
+    db.prepare(`
+      INSERT INTO page_labels (page_id, section_visibility) VALUES (?, ?)
+      ON CONFLICT(page_id) DO UPDATE SET section_visibility = excluded.section_visibility
+    `).run(pageId, JSON.stringify(meta.sectionVisibility));
+  }
+  return true;
 }
 
 export function getPostContent(pageId) {

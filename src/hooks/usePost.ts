@@ -1,16 +1,32 @@
 import { useState, useEffect } from 'react';
-import type { Post, Footer as FooterType } from '../types';
+import type { Post, Footer as FooterType, PageType, PageLabels, SectionVisibility } from '../types';
 
 interface UsePostResult {
   post: Post | null;
   footer: FooterType | null;
+  type: PageType;
+  labels: PageLabels | null;
+  sectionVisibility: SectionVisibility | null;
   loading: boolean;
   error: 'token_required' | 'invalid' | 'disabled' | 'not_found' | 'network' | null;
 }
 
+const DEFAULT_LABELS: PageLabels = {
+  themeLabel: 'Graduation Souvenir',
+  titleLabel: 'Section',
+  subtitleLabel: 'Batch',
+  peopleLabel: 'Class Registry',
+  peopleTagLabel: 'Honor',
+  messageLabel: 'Words from your Teacher',
+  messageAuthorLabel: 'Teacher',
+};
+
 export function usePost(pageId: string | undefined, token: string | null): UsePostResult {
   const [post, setPost] = useState<Post | null>(null);
   const [footer, setFooter] = useState<FooterType | null>(null);
+  const [type, setType] = useState<PageType>('graduation');
+  const [labels, setLabels] = useState<PageLabels | null>(null);
+  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<UsePostResult['error']>(null);
 
@@ -54,6 +70,9 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
         const data = await res.json();
         setPost(data.post);
         setFooter(data.footer);
+        setType(data.type || 'graduation');
+        setLabels(data.labels || DEFAULT_LABELS);
+        setSectionVisibility(data.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true });
         sessionStorage.setItem(`gm_token_${pageId}`, token);
         window.history.replaceState(null, '', `/${pageId}`);
       })
@@ -61,5 +80,5 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
       .finally(() => setLoading(false));
   }, [pageId, token]);
 
-  return { post, footer, loading, error };
+  return { post, footer, type, labels, sectionVisibility, loading, error };
 }

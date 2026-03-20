@@ -68,7 +68,8 @@ The built frontend is served from `dist/` by the Express server.
 ### Database schema
 
 - **users** — email, password_hash, name, role (admin/editor)
-- **pages** — id, enabled
+- **pages** — id, enabled, type (graduation/wedding/event)
+- **page_labels** — per-page label overrides (theme, title, people, message, etc.)
 - **tokens** — token, page_id, user_id
 - **page_assignments** — user_id, page_id (for editor scope)
 - **posts_content** — page content (section, batch, gallery, teacher, students, etc.)

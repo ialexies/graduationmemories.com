@@ -1,3 +1,22 @@
+export type PageType = 'graduation' | 'wedding' | 'event';
+
+export interface PageLabels {
+  themeLabel: string;
+  titleLabel: string;
+  subtitleLabel: string;
+  peopleLabel: string;
+  peopleTagLabel: string;
+  messageLabel: string;
+  messageAuthorLabel: string;
+}
+
+export interface SectionVisibility {
+  classPhoto?: boolean;
+  gallery?: boolean;
+  teacherMessage?: boolean;
+  peopleList?: boolean;
+}
+
 export interface Student {
   name: string;
   honor?: boolean;

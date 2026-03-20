@@ -1,6 +1,6 @@
 # CMS User Guide
 
-Guide for admins and editors using the Graduation Memories CMS.
+Guide for admins and editors using the Graduation Memories CMS. The app supports multiple page types (graduation, wedding, event) so you can use it for class memories, wedding souvenirs, reunions, and more.
 
 ## Login
 
@@ -31,13 +31,16 @@ Editors only see pages that an admin has assigned to them.
 
 1. Go to **Content** in the navigation
 2. Click **Edit content** next to the page you want to edit
-3. Fill in or update:
-   - **Section & basic info**: Section name, batch, location, quote
-   - **Images**: Class photo path, gallery image paths (one per line)
-   - **Teacher**: Name, title, photo path, message
-   - **Students**: Add/remove students; optionally check **Honor**
+3. **Page type** (optional): Choose Graduation, Wedding, or Event. This changes the labels shown on the public page (e.g. "Section" vs "Event", "Students" vs "Guests").
+4. **Visible sections** (optional): Uncheck any section to hide it on the public page (class/cover photo, image gallery, message block, people list). Click **Save page settings** to apply.
+5. **Custom labels** (optional): Click "Custom labels..." to override any label (theme, title, people list heading, etc.) for this page. Leave blank to use defaults for the selected type.
+6. Fill in or update:
+   - **Section & basic info**: Section/event name, batch/date, location, quote
+   - **Images**: Main photo path, gallery image paths
+   - **Teacher/Author**: Name, title, photo path, message (works for graduation teacher, wedding couple, or event host)
+   - **Students/Guests**: Add/remove people; optionally check Honor/VIP
    - **Together since**: e.g. "June 2025"
-4. Click **Save**
+7. Click **Save**
 
 Image paths should be like `/assets/h322x/class-photo.jpg`. Upload images via FTP or your existing process, then paste the path into the CMS.
 

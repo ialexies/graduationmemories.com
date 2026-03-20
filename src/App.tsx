@@ -24,7 +24,7 @@ function PostRoute() {
   const tokenFromUrl = searchParams.get('t');
   const tokenFromStorage = id ? sessionStorage.getItem(`${TOKEN_STORAGE_PREFIX}${id}`) : null;
   const token = tokenFromUrl || tokenFromStorage;
-  const { post, footer, loading, error } = usePost(id, token);
+  const { post, footer, labels, sectionVisibility, loading, error } = usePost(id, token);
 
   if (loading) {
     return (
@@ -42,7 +42,7 @@ function PostRoute() {
     return <AccessDeniedPage reason="not_found" />;
   }
 
-  return <PostPage post={post} footer={footer} />;
+  return <PostPage post={post} footer={footer} labels={labels} sectionVisibility={sectionVisibility} />;
 }
 
 function RootRoute() {

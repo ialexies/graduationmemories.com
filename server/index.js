@@ -4,7 +4,7 @@ import cors from 'cors';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getEditablePageIds, savePostContent, saveFooter } from './db.js';
+import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -32,12 +32,19 @@ app.get('/api/pages/:id', (req, res) => {
 
   const post = getPostContent(id);
   const footer = getFooter();
+  const meta = getPageLabels(id);
 
   if (!post || !footer) {
     return res.status(404).json({ error: 'Page not found' });
   }
 
-  res.json({ post, footer });
+  res.json({
+    post,
+    footer,
+    type: meta?.type || 'graduation',
+    labels: meta?.labels || {},
+    sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, peopleList: true },
+  });
 });
 
 app.post('/api/admin/login', (req, res) => {
@@ -78,6 +85,30 @@ app.put('/api/admin/pages/:id/content', requirePageAccess('id'), (req, res) => {
   if (!pageExists) return res.status(404).json({ error: 'Page not found' });
   savePostContent(id, post);
   res.json(getPostContent(id));
+});
+
+app.get('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
+  const { id } = req.params;
+  const meta = getPageMeta(id);
+  if (!meta) return res.status(404).json({ error: 'Page not found' });
+  res.json(meta);
+});
+
+app.put('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
+  const { id } = req.params;
+  // Ensure page exists (may be missing if content was backfilled but page never seeded)
+  const pageExists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(id);
+  if (!pageExists) {
+    const hasContent = db.prepare('SELECT 1 FROM posts_content WHERE page_id = ?').get(id);
+    if (hasContent) {
+      db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'graduation');
+    } else {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+  }
+  const ok = savePageMeta(id, req.body);
+  if (!ok) return res.status(404).json({ error: 'Page not found' });
+  res.json(getPageMeta(id));
 });
 
 app.get('/api/admin/footer', (req, res) => {

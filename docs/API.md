@@ -27,7 +27,10 @@ Or, for public page access, the token can be passed as a query parameter: `?t=TO
 
 - **GET** `/api/pages/:id?t=TOKEN`
 - **Query**: `t` (required) — access token for the page
-- **Response**: `{ post, footer }`
+- **Response**: `{ post, footer, type, labels }`
+  - `post`, `footer` — page content and footer config
+  - `type` — page type: `graduation` | `wedding` | `event`
+  - `labels` — labels for the page (theme, title, people, message, etc.)
 - **Status**: 200 on success; 401 if token invalid/missing; 403 if page disabled; 404 if page not found
 
 ---
@@ -41,6 +44,8 @@ Or, for public page access, the token can be passed as a query parameter: `?t=TO
 | GET | `/api/admin/pages` | Admin (all); Editor (assigned only) | List pages |
 | GET | `/api/admin/pages/:id/content` | Admin; Editor (assigned only) | Get post content |
 | PUT | `/api/admin/pages/:id/content` | Admin; Editor (assigned only) | Save post content |
+| GET | `/api/admin/pages/:id/meta` | Admin; Editor (assigned only) | Get page type and labels |
+| PUT | `/api/admin/pages/:id/meta` | Admin; Editor (assigned only) | Save page type and labels. Body: `{ type?, labels? }` |
 
 ### Footer
 
@@ -95,6 +100,25 @@ Or, for public page access, the token can be passed as a query parameter: `?t=TO
   "location": "Tipo, Hermosa, Bataan"
 }
 ```
+
+### Page meta (type + labels)
+
+```json
+{
+  "type": "graduation",
+  "labels": {
+    "themeLabel": "Graduation Souvenir",
+    "titleLabel": "Section",
+    "subtitleLabel": "Batch",
+    "peopleLabel": "Class Registry",
+    "peopleTagLabel": "Honor",
+    "messageLabel": "Words from your Teacher",
+    "messageAuthorLabel": "Teacher"
+  }
+}
+```
+
+Page types: `graduation`, `wedding`, `event`. Each type has default labels; the `page_labels` table stores per-page overrides.
 
 ---
 

@@ -1,17 +1,19 @@
 interface HeroSectionProps {
   sectionName: string;
   quote: string;
+  themeLabel?: string;
+  titleLabel?: string;
 }
 
-export function HeroSection({ sectionName, quote }: HeroSectionProps) {
+export function HeroSection({ sectionName, quote, themeLabel = 'Graduation Souvenir', titleLabel = 'Section' }: HeroSectionProps) {
   return (
     <header className="gradient-bg pt-12 pb-24 px-6 text-center text-white relative overflow-hidden">
       <div className="relative z-10">
         <p className="text-blue-300 font-semibold tracking-widest uppercase text-sm mb-2">
-          Graduation Souvenir
+          {themeLabel}
         </p>
         <h1 className="serif text-4xl md:text-5xl font-bold mb-4">
-          Section: {sectionName}
+          {titleLabel}: {sectionName}
         </h1>
         <div className="h-1 w-20 bg-blue-500 mx-auto rounded-full mb-4"></div>
         <p className="text-lg opacity-80 italic max-w-md mx-auto">"{quote}"</p>

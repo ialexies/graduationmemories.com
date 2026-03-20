@@ -10,7 +10,7 @@ export function ClassPhotoCard({ classPhoto, batch, location }: ClassPhotoCardPr
       <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-slate-200">
         <img
           src={classPhoto}
-          alt="Larawan ng Klase"
+          alt="Main photo"
           className="w-full h-full object-cover"
         />
       </div>
