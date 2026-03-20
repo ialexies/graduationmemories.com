@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import sharp from 'sharp';
 import { parseFile } from 'music-metadata';
-import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter } from './db.js';
+import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage } from './db.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -47,7 +47,7 @@ app.get('/api/pages/:id', (req, res) => {
   res.json({
     post,
     footer,
-    type: meta?.type || 'graduation',
+    type: meta?.type || 'event',
     labels: meta?.labels || {},
     sectionVisibility: meta?.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, teacherAudio: true, peopleList: true, studentPhotos: false },
     colorTheme: meta?.colorTheme || 'default',
@@ -75,11 +75,52 @@ app.get('/api/admin/pages', (req, res) => {
   try {
     const editableIds = getEditablePageIds(req.user.id, req.user.role);
     if (editableIds.length === 0) return res.json({ pages: [] });
-    const pages = db.prepare('SELECT * FROM pages WHERE id IN (' + editableIds.map(() => '?').join(',') + ') ORDER BY id').all(...editableIds);
+    const rows = db.prepare(`
+      SELECT p.id, p.enabled, p.type, p.created_at, c.section_name as label
+      FROM pages p
+      LEFT JOIN posts_content c ON p.id = c.page_id
+      WHERE p.id IN (${editableIds.map(() => '?').join(',')})
+      ORDER BY p.id
+    `).all(...editableIds);
+    const pages = rows.map((r) => ({
+      id: r.id,
+      enabled: r.enabled,
+      type: r.type,
+      created_at: r.created_at,
+      label: r.label || null,
+    }));
     res.json({ pages });
   } catch (err) {
     console.error('GET /api/admin/pages error:', err);
     res.status(500).json({ error: err.message || 'Failed to load pages' });
+  }
+});
+
+app.post('/api/admin/pages', requireAdmin, (req, res) => {
+  try {
+    const { id, type } = req.body;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Page ID is required' });
+    }
+    const trimmed = id.trim();
+    if (trimmed.length < 3 || trimmed.length > 20) {
+      return res.status(400).json({ error: 'Page ID must be 3–20 characters' });
+    }
+    if (!/^[a-zA-Z0-9-]+$/.test(trimmed)) {
+      return res.status(400).json({ error: 'Page ID can only contain letters, numbers, and hyphens' });
+    }
+    const exists = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(trimmed);
+    if (exists) {
+      return res.status(400).json({ error: 'A page with this ID already exists' });
+    }
+    const pageType = ['graduation', 'wedding', 'event'].includes(type) ? type : 'event';
+    createPage(trimmed, pageType);
+    db.prepare('INSERT OR IGNORE INTO page_assignments (user_id, page_id) VALUES (?, ?)').run(req.user.id, trimmed);
+    const page = db.prepare('SELECT * FROM pages WHERE id = ?').get(trimmed);
+    res.status(201).json(page);
+  } catch (err) {
+    console.error('POST /api/admin/pages error:', err);
+    res.status(500).json({ error: err.message || 'Failed to create page' });
   }
 });
 
@@ -281,7 +322,7 @@ app.put('/api/admin/pages/:id/meta', requirePageAccess('id'), (req, res) => {
     if (!pageExists) {
       const hasContent = db.prepare('SELECT 1 FROM posts_content WHERE page_id = ?').get(id);
       if (hasContent) {
-        db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'graduation');
+        db.prepare('INSERT OR IGNORE INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(id, req.body.type || 'event');
       } else {
         return res.status(404).json({ error: 'Page not found' });
       }

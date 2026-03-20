@@ -13,19 +13,19 @@ interface UsePostResult {
 }
 
 const DEFAULT_LABELS: PageLabels = {
-  themeLabel: 'Graduation Souvenir',
-  titleLabel: 'Section',
-  subtitleLabel: 'Batch',
-  peopleLabel: 'Class Registry',
-  peopleTagLabel: 'Honor',
-  messageLabel: 'Words from your Teacher',
-  messageAuthorLabel: 'Teacher',
+  themeLabel: 'Event Memories',
+  titleLabel: 'Event',
+  subtitleLabel: 'Date',
+  peopleLabel: 'Attendees',
+  peopleTagLabel: 'VIP',
+  messageLabel: 'Message from Host',
+  messageAuthorLabel: 'Host',
 };
 
 export function usePost(pageId: string | undefined, token: string | null): UsePostResult {
   const [post, setPost] = useState<Post | null>(null);
   const [footer, setFooter] = useState<FooterType | null>(null);
-  const [type, setType] = useState<PageType>('graduation');
+  const [type, setType] = useState<PageType>('event');
   const [labels, setLabels] = useState<PageLabels | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility | null>(null);
   const [colorTheme, setColorTheme] = useState<string>('default');
@@ -72,7 +72,7 @@ export function usePost(pageId: string | undefined, token: string | null): UsePo
         const data = await res.json();
         setPost(data.post);
         setFooter(data.footer);
-        setType(data.type || 'graduation');
+        setType(data.type || 'event');
         setLabels(data.labels || DEFAULT_LABELS);
         setSectionVisibility(data.sectionVisibility || { classPhoto: true, gallery: true, teacherMessage: true, teacherAudio: true, peopleList: true, studentPhotos: false });
         setColorTheme(data.colorTheme || 'default');

@@ -24,7 +24,7 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS pages (
       id TEXT PRIMARY KEY,
       enabled INTEGER DEFAULT 1,
-      type TEXT DEFAULT 'graduation',
+      type TEXT DEFAULT 'event',
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -88,7 +88,7 @@ export function initDb() {
   // Migration: add type column to pages if missing (existing DBs)
   const cols = db.prepare("SELECT name FROM pragma_table_info('pages') WHERE name = 'type'").all();
   if (cols.length === 0) {
-    db.exec("ALTER TABLE pages ADD COLUMN type TEXT DEFAULT 'graduation'");
+    db.exec("ALTER TABLE pages ADD COLUMN type TEXT DEFAULT 'event'");
   }
 
   // Migration: add section_visibility to page_labels if missing
@@ -233,11 +233,22 @@ const DEFAULT_LABELS = {
   },
 };
 
+export function createPage(pageId, type = 'event') {
+  const validType = ['graduation', 'wedding', 'event'].includes(type) ? type : 'event';
+  db.prepare('INSERT INTO pages (id, enabled, type) VALUES (?, 1, ?)').run(pageId, validType);
+  db.prepare(`
+    INSERT INTO posts_content (
+      page_id, section_name, batch, location, quote, class_photo, gallery,
+      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since
+    ) VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, '[]', '')
+  `).run(pageId);
+}
+
 export function getPageLabels(pageId) {
   const page = db.prepare('SELECT type FROM pages WHERE id = ?').get(pageId);
   if (!page) return null;
-  const pageType = page.type || 'graduation';
-  const defaults = DEFAULT_LABELS[pageType] || DEFAULT_LABELS.graduation;
+  const pageType = page.type || 'event';
+  const defaults = DEFAULT_LABELS[pageType] || DEFAULT_LABELS.event;
   const overrides = db.prepare('SELECT * FROM page_labels WHERE page_id = ?').get(pageId);
   if (!overrides) return { type: pageType, labels: defaults, sectionVisibility: DEFAULT_SECTION_VISIBILITY, colorTheme: 'default' };
   let sectionVisibility = DEFAULT_SECTION_VISIBILITY;

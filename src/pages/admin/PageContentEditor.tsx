@@ -240,7 +240,7 @@ export function PageContentEditor() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
-  const [pageType, setPageType] = useState<PageType>("graduation");
+  const [pageType, setPageType] = useState<PageType>("event");
   const [labels, setLabels] = useState<PageLabels | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(
     {
@@ -287,13 +287,13 @@ export function PageContentEditor() {
         return data;
       }),
       apiFetch(`/api/admin/pages/${id}/meta`).then(async (r) => {
-        if (!r.ok) return { type: "graduation" as PageType, labels: null };
+        if (!r.ok) return { type: "event" as PageType, labels: null };
         return r.json();
       }),
     ])
       .then(([contentData, metaData]) => {
         setPost(contentData);
-        setPageType(metaData?.type ?? "graduation");
+        setPageType(metaData?.type ?? "event");
         setLabels(metaData?.labels ?? null);
         setSectionVisibility((prev) => ({
           ...prev,
@@ -662,7 +662,9 @@ export function PageContentEditor() {
         >
           ← Back to content
         </Link>
-        <h1 className="text-2xl font-bold text-slate-800">Edit: {id}</h1>
+        <h1 className="text-2xl font-bold text-slate-800">
+          Edit: {post?.sectionName?.trim() ? `${post.sectionName} (${id})` : id}
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

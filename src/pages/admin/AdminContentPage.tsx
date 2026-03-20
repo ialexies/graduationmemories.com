@@ -4,7 +4,8 @@ import { apiFetch } from '../../lib/api';
 
 interface Page {
   id: string;
-  enabled: number;
+  enabled?: number;
+  label?: string | null;
 }
 
 export function AdminContentPage() {
@@ -33,7 +34,7 @@ export function AdminContentPage() {
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-slate-800">Page ID</th>
+              <th className="text-left px-4 py-3 font-medium text-slate-800">Page</th>
               <th className="text-left px-4 py-3 font-medium text-slate-800">Action</th>
             </tr>
           </thead>
@@ -47,7 +48,12 @@ export function AdminContentPage() {
             ) : (
               pages.map((page) => (
                 <tr key={page.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-mono text-slate-700">{page.id}</td>
+                  <td className="px-4 py-3 text-slate-700">
+                    <span className="font-medium">{page.label?.trim() || page.id}</span>
+                    {page.label?.trim() && (
+                      <span className="ml-2 font-mono text-slate-500 text-sm">({page.id})</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <Link
                       to={`/admin/content/${page.id}`}

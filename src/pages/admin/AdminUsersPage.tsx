@@ -11,6 +11,7 @@ interface User {
 
 interface Page {
   id: string;
+  label?: string | null;
 }
 
 export function AdminUsersPage() {
@@ -165,7 +166,7 @@ export function AdminUsersPage() {
             >
               {pages.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.id}
+                  {p.label?.trim() ? `${p.label} (${p.id})` : p.id}
                 </option>
               ))}
             </select>

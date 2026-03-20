@@ -73,6 +73,18 @@ The footer appears on all class pages.
 
 ## Admin-only tasks
 
+### Creating new pages
+
+1. Go to **Pages**
+2. Click **Create new page**
+3. Enter a **Page ID** (e.g. `batch2026` or `event-march`), or click **Auto-generate** for a random ID
+4. Choose **Page type** (Event, Graduation, or Wedding) — default is Event with general labels
+5. Click **Create** — the page is created and assigned to you
+6. Create a token in **Tokens** to share the page
+7. Edit content in **Content** to add photos, messages, and guests
+
+Page IDs must be 3–20 characters (letters, numbers, hyphens only).
+
 ### Enabling/disabling pages
 
 1. Go to **Pages**

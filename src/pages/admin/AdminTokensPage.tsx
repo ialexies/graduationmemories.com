@@ -11,6 +11,7 @@ interface Token {
 
 interface Page {
   id: string;
+  label?: string | null;
 }
 
 export function AdminTokensPage() {
@@ -88,7 +89,7 @@ export function AdminTokensPage() {
             >
               {pages.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.id}
+                  {p.label?.trim() ? `${p.label} (${p.id})` : p.id}
                 </option>
               ))}
             </select>
@@ -116,9 +117,12 @@ export function AdminTokensPage() {
             </tr>
           </thead>
           <tbody>
-            {tokens.map((t) => (
+            {tokens.map((t) => {
+              const page = pages.find((p) => p.id === t.page_id);
+              const pageLabel = page?.label?.trim() ? `${page.label} (${t.page_id})` : t.page_id;
+              return (
               <tr key={t.id} className="border-b border-slate-100 last:border-0">
-                <td className="px-4 py-3 font-mono text-slate-700">{t.page_id}</td>
+                <td className="px-4 py-3 text-slate-700">{pageLabel}</td>
                 <td className="px-4 py-3 font-mono text-xs text-slate-500">{t.token.slice(0, 16)}...</td>
                 <td className="px-4 py-3 text-slate-500 text-sm">{t.created_at}</td>
                 <td className="px-4 py-3 flex gap-2">
@@ -136,7 +140,8 @@ export function AdminTokensPage() {
                   </button>
                 </td>
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
         {tokens.length === 0 && (
