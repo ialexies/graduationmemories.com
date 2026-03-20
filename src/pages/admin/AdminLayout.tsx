@@ -13,7 +13,7 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+      <nav className="sticky top-0 z-10 bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
         <div className="flex gap-6">
           <Link to="/admin" className="font-semibold text-slate-800">
             Dashboard

@@ -158,7 +158,7 @@ export function PageContentEditor() {
   }
 
   function addStudent() {
-    setPost((p) => (p ? { ...p, students: [...p.students, { name: '' }] } : null));
+    setPost((p) => (p ? { ...p, students: [{ name: '' }, ...p.students] } : null));
   }
 
   function removeStudent(idx: number) {
@@ -174,6 +174,17 @@ export function PageContentEditor() {
       next[idx] = { ...next[idx], [field]: value };
       return { ...p, students: next };
     });
+  }
+
+  function uncheckAllHonor() {
+    setPost((p) =>
+      p
+        ? {
+            ...p,
+            students: p.students.map((s) => ({ ...s, honor: false })),
+          }
+        : null
+    );
   }
 
   function removeGalleryUrl(idx: number) {
@@ -415,8 +426,8 @@ export function PageContentEditor() {
               })}
             </div>
           </div>
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+            <div className="w-full sm:flex-1 min-w-0">
               <label htmlFor="pageType" className={labelClass}>Type</label>
               <select
                 id="pageType"
@@ -429,21 +440,28 @@ export function PageContentEditor() {
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowCustomLabels(!showCustomLabels)}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              {showCustomLabels ? 'Hide custom labels' : 'Custom labels...'}
-            </button>
-            <button
-              type="button"
-              onClick={saveMetaSettings}
-              disabled={metaSaving}
-              className="py-2 px-4 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50"
-            >
-              {metaSaving ? 'Saving...' : metaSaved ? 'Saved!' : 'Save page settings'}
-            </button>
+            <div className="flex flex-wrap gap-3 items-center w-full sm:w-auto sm:shrink-0 sm:self-end">
+              <button
+                type="button"
+                onClick={() => setShowCustomLabels(!showCustomLabels)}
+                className="text-sm py-1.5 px-3 sm:py-2 sm:px-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                {showCustomLabels ? 'Hide custom labels' : 'Custom labels...'}
+              </button>
+              <button
+                type="button"
+                onClick={saveMetaSettings}
+                disabled={metaSaving}
+                className="text-sm py-1.5 px-3 sm:py-2 sm:px-4 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50"
+              >
+                {metaSaving ? 'Saving...' : metaSaved ? 'Saved!' : (
+                  <>
+                    <span className="sm:hidden">Save</span>
+                    <span className="hidden sm:inline">Save page settings</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
           {showCustomLabels && (
             <div className="mt-4 pt-4 border-t border-slate-200 space-y-3">
@@ -633,15 +651,26 @@ export function PageContentEditor() {
         {sectionVisibility.peopleList !== false && (
           <div className="bg-white rounded-xl shadow border border-slate-200 p-6 space-y-4">
             <h2 className="font-semibold text-slate-800">Students</h2>
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
             <span className="text-sm text-slate-500">Add students with optional honor flag</span>
-            <button
-              type="button"
-              onClick={addStudent}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
-              + Add student
-            </button>
+            <div className="flex gap-3">
+              {post.students.some((s) => s.honor) && (
+                <button
+                  type="button"
+                  onClick={uncheckAllHonor}
+                  className="text-sm text-slate-600 hover:text-slate-800"
+                >
+                  Uncheck all Honor
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={addStudent}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                + Add student
+              </button>
+            </div>
           </div>
           {post.students.map((s, idx) => (
             <div key={idx} className="flex gap-2 items-center">
@@ -684,7 +713,7 @@ export function PageContentEditor() {
           </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="sticky bottom-0 z-10 -mx-6 px-6 py-4 mt-6 bg-slate-100 border-t border-slate-200 flex gap-3">
           <button
             type="submit"
             disabled={saving}
