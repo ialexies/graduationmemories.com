@@ -6,7 +6,7 @@ interface FooterProps {
 
 export function Footer({ footer }: FooterProps) {
   const branding = (
-      <div className="flex justify-center items-center gap-2 grayscale opacity-50">
+      <div className="flex justify-center items-center gap-2 grayscale opacity-60">
         {footer.logo ? (
           <img
             src={footer.logo}
@@ -14,9 +14,9 @@ export function Footer({ footer }: FooterProps) {
             className="w-8 h-8 object-contain"
           />
         ) : (
-          <div className="w-8 h-8 bg-slate-800 rounded-md"></div>
+          <div className="w-8 h-8 rounded-md" style={{ backgroundColor: 'var(--theme-primary)' }}></div>
         )}
-        <span className="font-bold tracking-tighter text-slate-800 text-xl uppercase">
+        <span className="font-bold tracking-tighter text-xl uppercase" style={{ color: 'var(--theme-primary)' }}>
           {footer.shopName}
         </span>
       </div>
@@ -36,7 +36,7 @@ export function Footer({ footer }: FooterProps) {
       ) : (
         branding
       )}
-      <p className="text-slate-400 text-xs uppercase tracking-widest">
+      <p className="text-xs uppercase tracking-widest opacity-70" style={{ color: 'var(--theme-primary)' }}>
         {footer.tagline} • {footer.location}
       </p>
     </footer>

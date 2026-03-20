@@ -14,8 +14,8 @@ export function ClassPhotoCard({ classPhoto, batch, location }: ClassPhotoCardPr
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="py-4 px-2 flex justify-between items-center text-sm font-medium text-slate-500">
-        <span>{batch}</span>
+      <div className="py-4 px-2 flex justify-between items-center text-sm font-medium">
+        <span style={{ color: 'var(--theme-accent)', opacity: 0.9 }}>{batch}</span>
         <span style={{ color: 'var(--theme-accent)' }}>{location}</span>
       </div>
     </div>

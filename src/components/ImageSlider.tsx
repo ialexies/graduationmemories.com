@@ -31,7 +31,10 @@ export function ImageSlider({
   return (
     <section className="mb-10">
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+        <div
+          className="p-2 rounded-lg bg-slate-100"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 12%, rgb(241 245 249))', color: 'var(--theme-accent)' }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="w-6 h-6"

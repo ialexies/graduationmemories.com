@@ -18,6 +18,10 @@ function StudentAvatar({ src }: { src: string }) {
       src={errored ? DEFAULT_AVATAR : src}
       alt=""
       className="w-10 h-10 rounded-full object-cover shrink-0 bg-white/20"
+      style={{
+        backgroundColor: 'color-mix(in srgb, var(--theme-accent) 25%, transparent)',
+        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.25)',
+      }}
       onError={() => setErrored(true)}
     />
   );
@@ -46,12 +50,12 @@ export function ClassRegistry({ students, togetherSince, peopleLabel = 'Attendee
               <span>{student.name}</span>
             </div>
             {student.honor && (
-              <span className="text-slate-500 text-xs shrink-0">{peopleTagLabel}</span>
+              <span className="text-xs shrink-0 opacity-90" style={{ color: 'var(--theme-accent)' }}>{peopleTagLabel}</span>
             )}
           </div>
         ))}
       </div>
-      <p className="mt-8 text-center text-xs text-slate-500">
+      <p className="mt-8 text-center text-xs opacity-90" style={{ color: 'var(--theme-accent)' }}>
         Together since {togetherSince}
       </p>
     </section>
