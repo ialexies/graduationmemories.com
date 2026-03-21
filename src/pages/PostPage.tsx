@@ -57,20 +57,19 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
           </div>
         )}
 
-        {vis.gallery !== false && (
+        {(vis.teacherAudio !== false && post.teacherAudio) || vis.gallery !== false ? (
           <div className="animate-slide-up" style={{ animationDelay: `${nextDelay()}ms` }}>
-            <ImageSlider images={post.gallery} title="GALLERY" layout="grid" />
+            {vis.teacherAudio !== false && post.teacherAudio && (
+              <TeacherAudioPlayer
+                src={post.teacherAudio}
+                label={labels?.messageAuthorLabel ? `Listen from ${labels.messageAuthorLabel}` : undefined}
+              />
+            )}
+            {vis.gallery !== false && (
+              <ImageSlider images={post.gallery} title="GALLERY" layout="grid" />
+            )}
           </div>
-        )}
-
-        {vis.teacherAudio !== false && post.teacherAudio && (
-          <div className="animate-slide-up" style={{ animationDelay: `${nextDelay()}ms` }}>
-            <TeacherAudioPlayer
-              src={post.teacherAudio}
-              label={labels?.messageAuthorLabel ? `Listen from ${labels.messageAuthorLabel}` : undefined}
-            />
-          </div>
-        )}
+        ) : null}
 
         {vis.teacherMessage !== false && (
           <div className="animate-slide-up" style={{ animationDelay: `${nextDelay()}ms` }}>

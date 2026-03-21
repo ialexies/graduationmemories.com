@@ -35,6 +35,21 @@ body {
     }
   }
 
+  @keyframes pulse-play {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-accent) 0%, transparent);
+    }
+    50% {
+      transform: scale(1.06);
+      box-shadow: 0 0 0 10px color-mix(in srgb, var(--theme-accent) 30%, transparent);
+    }
+  }
+
+  .animate-pulse-play {
+    animation: pulse-play 1.8s ease-in-out infinite;
+  }
+
   .animate-fade-in {
     animation: fade-in 0.25s ease-out forwards;
     animation-fill-mode: both;
@@ -54,7 +69,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-slide-up,
-  .animate-scale-in {
+  .animate-scale-in,
+  .animate-pulse-play {
     animation: none;
   }
 }

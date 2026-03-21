@@ -31,7 +31,7 @@ export function TeacherAudioPlayer({
         <button
           type="button"
           onClick={handlePlayClick}
-          className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-smooth hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-accent)]"
+          className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-smooth hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-accent)] ${!hasStarted ? "animate-pulse-play" : ""}`}
           style={{
             backgroundColor: "var(--theme-accent)",
             color: "white",
