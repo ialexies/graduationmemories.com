@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 interface TeacherMessageProps {
   message: string;
   teacherName: string;
@@ -6,6 +8,8 @@ interface TeacherMessageProps {
   messageLabel?: string;
 }
 
+const COLLAPSE_CHAR_LIMIT = 350;
+
 export function TeacherMessage({
   message,
   teacherName,
@@ -13,6 +17,12 @@ export function TeacherMessage({
   teacherTitle,
   messageLabel = 'Message from Host',
 }: TeacherMessageProps) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = message.length > COLLAPSE_CHAR_LIMIT;
+  const displayMessage = isLong && !expanded
+    ? message.slice(0, COLLAPSE_CHAR_LIMIT).trim() + '...'
+    : message;
+
   return (
     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 mb-10 relative">
       <svg
@@ -34,9 +44,21 @@ export function TeacherMessage({
             loading="lazy"
           />
         )}
-        <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>
-          "{message}"
-        </p>
+        <div className="w-full">
+          <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>
+            "{displayMessage}"
+          </p>
+          {isLong && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="mt-3 text-sm font-medium transition-colors hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 rounded"
+              style={{ color: 'var(--theme-accent)' }}
+            >
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+        </div>
       </div>
       <div className="mt-6 text-center">
         <p className="font-bold text-slate-800">— {teacherName}</p>
