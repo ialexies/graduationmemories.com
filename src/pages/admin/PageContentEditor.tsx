@@ -62,6 +62,19 @@ function getSectionLabel(key: keyof SectionVisibility, labels: PageLabels): stri
   }
 }
 
+function GripIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="9" cy="5" r="1" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="9" cy="19" r="1" />
+      <circle cx="15" cy="5" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <circle cx="15" cy="19" r="1" />
+    </svg>
+  );
+}
+
 function TrashIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -372,6 +385,17 @@ export function PageContentEditor() {
     setPost((p) =>
       p ? { ...p, students: p.students.filter((_, i) => i !== idx) } : null,
     );
+  }
+
+  function reorderStudent(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    setPost((p) => {
+      if (!p) return null;
+      const students = [...p.students];
+      const [removed] = students.splice(fromIdx, 1);
+      students.splice(toIdx, 0, removed);
+      return { ...p, students };
+    });
   }
 
   function updateStudent(
@@ -1118,7 +1142,7 @@ export function PageContentEditor() {
             <h2 className="font-semibold text-slate-800">{displayLabels.peopleLabel}</h2>
             <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
               <span className="text-sm text-slate-500">
-                Add {displayLabels.peopleLabel.toLowerCase()} with optional {displayLabels.peopleTagLabel.toLowerCase()} flag
+                Add {displayLabels.peopleLabel.toLowerCase()} with optional {displayLabels.peopleTagLabel.toLowerCase()} flag. Drag the grip to reorder.
               </span>
               <div className="flex gap-3">
                 {post.students.some((s) => s.honor) && (
@@ -1150,7 +1174,33 @@ export function PageContentEditor() {
               />
             )}
             {post.students.map((s, idx) => (
-              <div key={idx} className="flex gap-2 items-center">
+              <div
+                key={idx}
+                className="flex gap-2 items-center group/row rounded-lg border border-transparent hover:border-slate-200 transition-colors"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const fromStr = e.dataTransfer.getData("text/plain");
+                  if (fromStr === "") return;
+                  const fromIdx = parseInt(fromStr, 10);
+                  if (!Number.isNaN(fromIdx) && fromIdx !== idx) reorderStudent(fromIdx, idx);
+                }}
+              >
+                <div
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", String(idx));
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  className="shrink-0 p-1.5 -ml-1 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 rounded touch-none"
+                  aria-label={`Drag to reorder ${s.name || "attendee"}`}
+                  title="Drag to reorder"
+                >
+                  <GripIcon />
+                </div>
                 {sectionVisibility.studentPhotos && (
                   <div className="relative group shrink-0">
                     {s.photo ? (
