@@ -1,4 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import Counter from 'yet-another-react-lightbox/plugins/counter';
+import Slideshow from 'yet-another-react-lightbox/plugins/slideshow';
+import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
+import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 
 interface ImageSliderProps {
   images: string[];
@@ -13,8 +18,16 @@ export function ImageSlider({
 }: ImageSliderProps) {
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const swipeHandled = useRef(false);
+
+  const slides = useMemo(
+    () => images.map((src, i) => ({ src, alt: `${title} — image ${i + 1}` })),
+    [images, title]
+  );
 
   const goNext = useCallback(() => {
     if (images.length <= 1) return;
@@ -40,7 +53,6 @@ export function ImageSlider({
     return () => clearInterval(id);
   }, [images.length, autoPlayInterval, goNext]);
 
-  // Preload next and previous images
   useEffect(() => {
     if (images.length <= 1) return;
     const nextIdx = (current + 1) % images.length;
@@ -52,6 +64,7 @@ export function ImageSlider({
   }, [images, current]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    swipeHandled.current = false;
     touchStartX.current = e.touches[0].clientX;
   };
 
@@ -62,9 +75,24 @@ export function ImageSlider({
   const handleTouchEnd = () => {
     const diff = touchStartX.current - touchEndX.current;
     if (Math.abs(diff) > 50) {
+      swipeHandled.current = true;
       diff > 0 ? goNext() : goPrev();
     }
   };
+
+  function openLightbox() {
+    if (swipeHandled.current) {
+      swipeHandled.current = false;
+      return;
+    }
+    setLightboxIndex(current);
+    setLightboxOpen(true);
+  }
+
+  function closeLightbox() {
+    setLightboxOpen(false);
+    setCurrent(lightboxIndex);
+  }
 
   if (!images.length) {
     return (
@@ -117,19 +145,30 @@ export function ImageSlider({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
-          src={images[current]}
-          alt={`${title} ${current + 1}`}
-          className={`w-full h-full object-cover transition-smooth ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
-          loading={current === 0 ? 'eager' : 'lazy'}
-        />
+        <button
+          type="button"
+          onClick={openLightbox}
+          className="absolute inset-0 z-[5] flex h-full w-full cursor-zoom-in border-0 bg-transparent p-0 text-left"
+          aria-label={`View ${title} in fullscreen gallery`}
+        >
+          <img
+            src={images[current]}
+            alt={`${title} ${current + 1}`}
+            className={`h-full w-full object-cover transition-smooth select-none ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+            loading={current === 0 ? 'eager' : 'lazy'}
+            draggable={false}
+          />
+        </button>
         {images.length > 1 && (
           <>
             <button
               type="button"
-              onClick={goPrev}
+              onClick={(e) => {
+                e.stopPropagation();
+                goPrev();
+              }}
               disabled={isTransitioning}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Previous image"
             >
               <svg
@@ -149,9 +188,12 @@ export function ImageSlider({
             </button>
             <button
               type="button"
-              onClick={goNext}
+              onClick={(e) => {
+                e.stopPropagation();
+                goNext();
+              }}
               disabled={isTransitioning}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-smooth [color:var(--theme-accent)] hover:[color:var(--theme-primary)]"
               aria-label="Next image"
             >
               <svg
@@ -169,12 +211,15 @@ export function ImageSlider({
                 />
               </svg>
             </button>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-2">
               {images.map((_, i) => (
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setCurrent(i)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrent(i);
+                  }}
                   className={`w-2 h-2 rounded-full transition-smooth ${
                     i === current ? '' : 'opacity-50 hover:opacity-75'
                   }`}
@@ -186,6 +231,20 @@ export function ImageSlider({
           </>
         )}
       </div>
+
+      <Lightbox
+        plugins={[Counter, Slideshow, Thumbnails, Zoom]}
+        slideshow={{ delay: autoPlayInterval }}
+        open={lightboxOpen}
+        close={closeLightbox}
+        index={lightboxIndex}
+        slides={slides}
+        on={{
+          view: ({ index }) => setLightboxIndex(index),
+        }}
+        controller={{ closeOnBackdropClick: true }}
+        carousel={{ finite: images.length <= 1 }}
+      />
     </section>
   );
 }
