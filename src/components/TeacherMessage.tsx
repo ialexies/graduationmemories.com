@@ -34,7 +34,7 @@ export function TeacherMessage({
             loading="lazy"
           />
         )}
-        <p className="text-slate-600 leading-relaxed italic text-center text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>
+        <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>
           "{message}"
         </p>
       </div>

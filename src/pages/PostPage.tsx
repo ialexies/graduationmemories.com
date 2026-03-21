@@ -36,7 +36,7 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
   };
 
   return (
-    <div className="bg-slate-50 text-slate-900 antialiased animate-fade-in" style={themeVars as React.CSSProperties}>
+    <div className="bg-slate-50 text-slate-900 antialiased animate-fade-in overflow-x-hidden" style={themeVars as React.CSSProperties}>
       <div className="animate-fade-in">
         <HeroSection
           sectionName={post.sectionName}

@@ -132,30 +132,10 @@ export function ImageSlider({
     return () => el.removeEventListener('touchmove', onTouchMove);
   }, [layout, images.length]);
 
-  useEffect(() => {
-    if (layout !== 'grid' || images.length === 0) return;
-    const el = gridScrollRef.current;
-    if (!el) return;
-    const scrollSpeed = 0.8;
-    const tickInterval = 40;
-    const id = setInterval(() => {
-      if (gridDragRef.current.isDragging) return;
-      const container = gridScrollRef.current;
-      if (!container) return;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      if (maxScroll <= 0) return;
-      container.scrollBy({ left: scrollSpeed, behavior: 'auto' });
-      if (container.scrollLeft >= maxScroll - 1) {
-        container.scrollLeft = 0;
-      }
-    }, tickInterval);
-    return () => clearInterval(id);
-  }, [layout, images.length]);
-
   if (!images.length) {
     if (layout === 'grid') {
       return (
-        <section className="mb-10 py-12 rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 22%, rgb(248 250 252))' }}>
+        <section className="full-bleed mb-10 py-12" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 22%, rgb(248 250 252))' }}>
           <h2 className="text-2xl font-bold text-center tracking-wide mb-6 text-slate-800">GALLERY</h2>
           <div className="flex items-center justify-center min-h-[200px]">
             <p className="text-sm text-slate-500">No images yet</p>
@@ -185,7 +165,7 @@ export function ImageSlider({
 
   if (layout === 'grid') {
     return (
-      <section className="mb-10 py-10 sm:py-12 px-4 sm:px-6 rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 22%, rgb(248 250 252))' }}>
+      <section className="full-bleed mb-10 py-10 sm:py-12 px-0" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-accent) 22%, rgb(248 250 252))' }}>
         <h2 className="text-2xl font-bold text-center tracking-wide mb-6 text-slate-800">{title}</h2>
         <div
           ref={gridScrollRef}
