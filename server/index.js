@@ -10,6 +10,7 @@ import { writeFile } from 'fs/promises';
 import sharp from 'sharp';
 import { parseFile } from 'music-metadata';
 import { initDb, seedDb, db, validateToken, getPostContent, getFooter, getPageLabels, getPageMeta, savePageMeta, getEditablePageIds, savePostContent, saveFooter, createPage, duplicatePage, VALID_PAGE_TYPES } from './db.js';
+import { streamBackupZip, importBackupFromBuffer } from './backup.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -27,6 +28,9 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) =>
+    req.path === '/api/admin/backup' ||
+    (req.method === 'POST' && req.path === '/api/admin/backup/restore'),
 });
 
 const loginLimiter = rateLimit({
@@ -494,6 +498,48 @@ app.post('/api/admin/assign', requireAdmin, (req, res) => {
   }
 });
 
+const restoreUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 512 * 1024 * 1024 },
+});
+
+app.get('/api/admin/backup', requireAdmin, (req, res) => {
+  const pageId = typeof req.query.pageId === 'string' ? req.query.pageId.trim() : '';
+  const assetsRoot = process.env.ASSETS_PATH || join(__dirname, '..', 'public', 'assets');
+  if (pageId) {
+    streamBackupZip(res, assetsRoot, { scope: 'page', pageId });
+  } else {
+    streamBackupZip(res, assetsRoot, {});
+  }
+});
+
+app.post(
+  '/api/admin/backup/restore',
+  requireAdmin,
+  restoreUpload.single('file'),
+  async (req, res) => {
+    try {
+      if (!req.file?.buffer) {
+        return res.status(400).json({ error: 'ZIP file required (field name: file)' });
+      }
+      const confirmFull = req.body?.confirm === 'RESTORE';
+      const assetsRoot = process.env.ASSETS_PATH || join(__dirname, '..', 'public', 'assets');
+      const result = await importBackupFromBuffer(req.file.buffer, assetsRoot, { confirmFull });
+      if (!result.ok) {
+        return res.status(result.status || 400).json({ error: result.error });
+      }
+      res.json({
+        ok: true,
+        message:
+          'Restore completed. If this was a full restore, log in again with a user from the backup.',
+      });
+    } catch (err) {
+      console.error('POST backup restore error:', err);
+      res.status(500).json({ error: err.message || 'Restore failed' });
+    }
+  }
+);
+
 // Serve uploaded assets so /assets/pageId/file.jpg works
 const assetsPath = process.env.ASSETS_PATH || join(__dirname, '..', 'public', 'assets');
 if (!existsSync(assetsPath)) mkdirSync(assetsPath, { recursive: true });
@@ -515,6 +561,9 @@ app.get('*', (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+  if (err?.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Backup file too large (max 512 MB)' });
+  }
   console.error('Unhandled error:', err);
   res.status(500).json({ error: err.message || 'Internal server error' });
 });

@@ -18,6 +18,7 @@ import { PageContentEditor } from './pages/admin/PageContentEditor';
 import { FooterEditorPage } from './pages/admin/FooterEditorPage';
 import { AdminTokensPage } from './pages/admin/AdminTokensPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { BackupPage } from './pages/admin/BackupPage';
 
 const TOKEN_STORAGE_PREFIX = 'gm_token_';
 
@@ -67,6 +68,7 @@ function App() {
                   <Route path="pages" element={<RequireAdmin><AdminPagesPage /></RequireAdmin>} />
                   <Route path="tokens" element={<RequireAdmin><AdminTokensPage /></RequireAdmin>} />
                   <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
+                  <Route path="backup" element={<RequireAdmin><BackupPage /></RequireAdmin>} />
                 </Route>
               </Route>
             </Routes>

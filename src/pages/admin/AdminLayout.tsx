@@ -9,6 +9,7 @@ const navLinks = [
   { to: '/admin/pages', label: 'Pages', adminOnly: true },
   { to: '/admin/tokens', label: 'Tokens', adminOnly: true },
   { to: '/admin/users', label: 'Users', adminOnly: true },
+  { to: '/admin/backup', label: 'Backup', adminOnly: true },
 ];
 
 function MenuIcon() {

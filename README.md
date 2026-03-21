@@ -29,6 +29,7 @@ npm run dev          # Vite on port 5173
 - **Image upload** — Upload photos directly (no paths)
 - **Custom labels** — Override labels per page
 - **Admin / Editor roles** — Editors see only assigned pages
+- **Backup & restore** (admins) — Admin → Backup: download a ZIP of the SQLite data and `public/assets/` (or `ASSETS_PATH`). Full restore replaces the entire site (type `RESTORE` to confirm). Page-only backup merges one page into the existing database. **Treat backup ZIPs as secrets** (they contain password hashes and access tokens).
 
 ## Scripts
 

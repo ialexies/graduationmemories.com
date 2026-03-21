@@ -30,8 +30,13 @@ Your role (Admin or Editor) determines what you can see and edit.
 | Manage tokens | Yes | No |
 | Manage users | Yes | No |
 | Create new pages | Yes | No |
+| Backup & restore | Yes | No |
 
 Editors only see pages that an admin has assigned to them.
+
+### Backup (admins only)
+
+Open **Backup** in the navigation to download a ZIP of all data and uploads, or export a single page. To restore: upload the ZIP. **Full site restore** requires typing `RESTORE` in the confirmation field and replaces everything—log in again afterward. **Page backup** restores merge one page only. Keep ZIP files private (passwords and tokens inside).
 
 ---
 

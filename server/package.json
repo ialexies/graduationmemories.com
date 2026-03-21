@@ -7,15 +7,17 @@
     "dev": "node --watch index.js"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "bcrypt": "^5.1.1",
-    "express-rate-limit": "^8.3.1",
     "better-sqlite3": "^11.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.3.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
     "music-metadata": "^11.12.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "unzipper": "^0.12.3"
   }
 }

@@ -24,6 +24,14 @@ Exposes the app on port 8084.
 
 SQLite data and uploaded assets (images, audio) persist in the `graduationmemories-data` volume. Assets are stored in `/data/assets/{pageId}/` and served at `/assets/`.
 
+### Backup and restore
+
+In the CMS (**Admin → Backup**), you can download a ZIP (`manifest.json`, `data.json`, and `assets/…`) to copy a site between environments. **Full restore** wipes the current database and asset tree and replaces them—confirm with the exact text `RESTORE`. **Page backup** merge-imports a single page without clearing users or footer.
+
+- Use HTTPS in production; backup files contain password hashes and NFC tokens.
+- After a **full** restore, log in again with a user from the backup (existing JWTs may be invalid).
+- Server dependencies include `archiver` and `unzipper` (see `server/package.json`).
+
 ## Manual deployment
 
 1. Build frontend: `npm run build`
