@@ -12,7 +12,7 @@ interface TeacherMessageProps {
 const COLLAPSE_CHAR_LIMIT = 350;
 
 function looksLikeHtml(str: string): boolean {
-  return /<(p|div|br|h[1-6]|strong|b|em|i|ul|ol|li|blockquote)\b/.test(str);
+  return /<(p|div|br|h[1-6]|strong|b|em|i|ul|ol|li|blockquote|pre|code|a)\b/.test(str);
 }
 
 function stripHtml(html: string): string {
@@ -34,8 +34,8 @@ export function TeacherMessage({
   const displayContent = useMemo(() => {
     if (isHtml) {
       const sanitized = DOMPurify.sanitize(message, {
-        ALLOWED_TAGS: ['p', 'br', 'h1', 'h2', 'h3', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'blockquote'],
-        ALLOWED_ATTR: ['style'],
+        ALLOWED_TAGS: ['p', 'br', 'h1', 'h2', 'h3', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a'],
+        ALLOWED_ATTR: ['style', 'href', 'target', 'rel'],
       });
       if (isLong && !expanded) {
         const plain = stripHtml(sanitized);
@@ -73,7 +73,7 @@ export function TeacherMessage({
         )}
         <div className="w-full">
           <div
-            className="text-slate-600 leading-relaxed text-left text-lg pl-4 border-l-4 teacher-message-content [&_p]:my-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic"
+            className="text-slate-600 leading-relaxed text-left text-lg pl-4 border-l-4 teacher-message-content [&_p]:my-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_pre]:my-2 [&_pre]:p-4 [&_pre]:bg-slate-100 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:text-sm [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded [&_code]:text-sm [&_a]:underline [&_a]:text-[var(--theme-accent)] [&_a]:hover:opacity-80"
             style={{ borderColor: 'var(--theme-accent)' }}
           >
             {displayContent.type === 'html' ? (

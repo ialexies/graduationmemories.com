@@ -664,9 +664,11 @@ export function PageContentEditor() {
       setError("Please upload a class photo.");
       return;
     }
-    const msgText = post.teacherMessage?.replace(/<[^>]+>/g, "").trim() ?? "";
+    const msgText = post.teacherMessage?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "";
     if (sectionVisibility.teacherMessage !== false && !msgText) {
-      setError("Please enter a message.");
+      setError(
+        "Please enter message text. Formatting (bold, headings, links, etc.) is allowed, but the message must contain actual text—empty paragraphs or whitespace only are not valid."
+      );
       return;
     }
     setSaving(true);

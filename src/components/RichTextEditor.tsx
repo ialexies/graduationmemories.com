@@ -128,7 +128,7 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
  */
 export function toEditorHtml(value: string): string {
   if (!value || value.trim() === "") return "<p></p>";
-  if (/<(p|div|br|h[1-6]|strong|b|em|i|ul|ol|li|blockquote)\b/.test(value)) {
+  if (/<(p|div|br|h[1-6]|strong|b|em|i|ul|ol|li|blockquote|pre|code|a)\b/.test(value)) {
     return value;
   }
   const escaped = value
@@ -176,7 +176,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         "aria-label": ariaLabel,
-        class: "w-full px-3 py-2 min-h-[160px] text-slate-800 focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-600",
+        class: "w-full px-3 py-2 min-h-[160px] text-slate-800 focus:outline-none [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_pre]:my-2 [&_pre]:p-4 [&_pre]:bg-slate-100 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:text-sm [&_code]:bg-slate-100 [&_code]:px-1 [&_code]:rounded [&_code]:text-sm [&_a]:underline [&_a]:text-blue-600",
       },
     },
   });
