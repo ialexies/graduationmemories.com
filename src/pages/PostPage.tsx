@@ -59,7 +59,7 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
 
         {vis.gallery !== false && (
           <div className="animate-slide-up" style={{ animationDelay: `${nextDelay()}ms` }}>
-            <ImageSlider images={post.gallery} />
+            <ImageSlider images={post.gallery} title="GALLERY" layout="grid" />
           </div>
         )}
 

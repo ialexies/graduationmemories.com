@@ -9,12 +9,14 @@ interface ImageSliderProps {
   images: string[];
   title?: string;
   autoPlayInterval?: number;
+  layout?: 'carousel' | 'grid';
 }
 
 export function ImageSlider({
   images,
   title = 'Our Journey',
   autoPlayInterval = 4000,
+  layout = 'carousel',
 }: ImageSliderProps) {
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -23,6 +25,8 @@ export function ImageSlider({
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
   const swipeHandled = useRef(false);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  const gridDragRef = useRef({ isDragging: false, startX: 0, startScrollLeft: 0, didDrag: false });
 
   const slides = useMemo(
     () => images.map((src, i) => ({ src, alt: `${title} — image ${i + 1}` })),
@@ -94,7 +98,51 @@ export function ImageSlider({
     setCurrent(lightboxIndex);
   }
 
+  const handleGridPointerDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    gridDragRef.current = { isDragging: false, startX: clientX, startScrollLeft: gridScrollRef.current?.scrollLeft ?? 0, didDrag: false };
+  }, []);
+
+  const handleGridPointerMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    if (!isTouch && (e as React.MouseEvent).buttons === 0) return;
+    const clientX = isTouch ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const { startX, startScrollLeft } = gridDragRef.current;
+    if (Math.abs(clientX - startX) > 5) {
+      gridDragRef.current.isDragging = true;
+      gridDragRef.current.didDrag = true;
+      if (gridScrollRef.current) {
+        gridScrollRef.current.scrollLeft = startScrollLeft - (clientX - startX);
+      }
+      if (isTouch) e.preventDefault();
+    }
+  }, []);
+
+  const handleGridPointerUp = useCallback(() => {
+    gridDragRef.current.isDragging = false;
+  }, []);
+
+  useEffect(() => {
+    const el = gridScrollRef.current;
+    if (!el || layout !== 'grid') return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (gridDragRef.current.didDrag) e.preventDefault();
+    };
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => el.removeEventListener('touchmove', onTouchMove);
+  }, [layout, images.length]);
+
   if (!images.length) {
+    if (layout === 'grid') {
+      return (
+        <section className="mb-10 py-12 rounded-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+          <h2 className="text-2xl font-bold text-center tracking-wide mb-6" style={{ color: 'color-mix(in srgb, var(--theme-accent) 95%, white)' }}>GALLERY</h2>
+          <div className="flex items-center justify-center min-h-[200px]">
+            <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--theme-accent) 60%, white)' }}>No images yet</p>
+          </div>
+        </section>
+      );
+    }
     return (
       <section className="mb-10">
         <div className="flex items-center gap-3 mb-4">
@@ -111,6 +159,70 @@ export function ImageSlider({
         <div className="rounded-2xl overflow-hidden shadow-lg border-4 border-white aspect-[4/3] bg-slate-100 flex items-center justify-center">
           <p className="text-slate-500 text-sm">No images yet</p>
         </div>
+      </section>
+    );
+  }
+
+  if (layout === 'grid') {
+    return (
+      <section className="mb-10 py-10 sm:py-12 px-4 sm:px-6 rounded-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+        <h2 className="text-2xl font-bold text-center tracking-wide mb-6" style={{ color: 'color-mix(in srgb, var(--theme-accent) 95%, white)' }}>{title}</h2>
+        <div
+          ref={gridScrollRef}
+          className="gallery-scrollbar grid gap-3 overflow-x-auto overflow-y-hidden py-6 pb-2 scroll-smooth cursor-grab active:cursor-grabbing select-none"
+          style={{
+            gridTemplateRows: 'repeat(3, 220px)',
+            gridAutoFlow: 'column',
+            gridAutoColumns: 'minmax(180px, 220px)',
+            maxHeight: 'calc(3 * 220px + 2 * 12px + 48px)',
+          }}
+          onMouseDown={handleGridPointerDown}
+          onMouseMove={handleGridPointerMove}
+          onMouseUp={handleGridPointerUp}
+          onMouseLeave={handleGridPointerUp}
+          onTouchStart={handleGridPointerDown}
+          onTouchMove={handleGridPointerMove}
+          onTouchEnd={handleGridPointerUp}
+        >
+          {images.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (gridDragRef.current.didDrag) {
+                  gridDragRef.current.didDrag = false;
+                  return;
+                }
+                setLightboxIndex(i);
+                setLightboxOpen(true);
+              }}
+              className="w-full h-full rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] transition-smooth hover:opacity-90 block"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--theme-primary) 80%, transparent)' }}
+              aria-label={`View image ${i + 1}`}
+            >
+              <img
+                src={src}
+                alt={`${title} — image ${i + 1}`}
+                className="w-full h-full object-cover grayscale block"
+                loading={i < 16 ? 'eager' : 'lazy'}
+                draggable={false}
+              />
+            </button>
+          ))}
+        </div>
+        <Lightbox
+          plugins={[Counter, Slideshow, Thumbnails, Zoom]}
+          slideshow={{ delay: autoPlayInterval }}
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          index={lightboxIndex}
+          slides={slides}
+          on={{
+            view: ({ index }) => setLightboxIndex(index),
+          }}
+          controller={{ closeOnBackdropClick: true }}
+          carousel={{ finite: images.length <= 1 }}
+        />
       </section>
     );
   }

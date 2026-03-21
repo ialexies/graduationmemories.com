@@ -83,3 +83,33 @@ body {
 .photo-shadow {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
+
+/* Gallery horizontal scrollbar */
+.gallery-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-accent) transparent;
+}
+
+.gallery-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+
+.gallery-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 0 1rem;
+}
+
+.gallery-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--theme-accent) 50%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.gallery-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--theme-accent) 70%, transparent);
+}
+
+.gallery-scrollbar::-webkit-scrollbar-thumb:active {
+  background: var(--theme-accent);
+}
