@@ -45,7 +45,7 @@ export function TeacherMessage({
           />
         )}
         <div className="w-full">
-          <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4" style={{ borderColor: 'var(--theme-accent)' }}>
+          <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4 whitespace-pre-line" style={{ borderColor: 'var(--theme-accent)' }}>
             "{displayMessage}"
           </p>
           {isLong && (
