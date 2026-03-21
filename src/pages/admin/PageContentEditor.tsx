@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { apiFetch } from "../../lib/api";
 import { Skeleton } from "../../components/Skeleton";
+import { RichTextEditor } from "../../components/RichTextEditor";
 import { THEME_OPTIONS, getThemeColors } from "../../lib/themePresets";
 import type {
   Post,
@@ -663,6 +664,11 @@ export function PageContentEditor() {
       setError("Please upload a class photo.");
       return;
     }
+    const msgText = post.teacherMessage?.replace(/<[^>]+>/g, "").trim() ?? "";
+    if (sectionVisibility.teacherMessage !== false && !msgText) {
+      setError("Please enter a message.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -1114,13 +1120,16 @@ export function PageContentEditor() {
               <label htmlFor="teacherMessage" className={labelClass}>
                 {displayLabels.messageLabel}
               </label>
-              <textarea
+              <p className="text-xs text-slate-500 mb-1.5">
+                Use the toolbar for bold, italic, headings, and lists.
+              </p>
+              <RichTextEditor
+                key={id}
                 id="teacherMessage"
-                value={post.teacherMessage}
-                onChange={(e) => update("teacherMessage", e.target.value)}
-                rows={4}
-                className={inputClass}
+                value={post.teacherMessage ?? ""}
+                onChange={(html) => update("teacherMessage", html)}
                 required
+                aria-label={displayLabels.messageLabel}
               />
             </div>
             {sectionVisibility.teacherAudio !== false && (

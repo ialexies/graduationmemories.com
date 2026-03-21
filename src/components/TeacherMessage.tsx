@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 
 interface TeacherMessageProps {
   message: string;
@@ -10,6 +11,14 @@ interface TeacherMessageProps {
 
 const COLLAPSE_CHAR_LIMIT = 350;
 
+function looksLikeHtml(str: string): boolean {
+  return /<(p|div|br|h[1-6]|strong|b|em|i|ul|ol|li|blockquote)\b/.test(str);
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export function TeacherMessage({
   message,
   teacherName,
@@ -18,10 +27,28 @@ export function TeacherMessage({
   messageLabel = 'Message from Host',
 }: TeacherMessageProps) {
   const [expanded, setExpanded] = useState(false);
-  const isLong = message.length > COLLAPSE_CHAR_LIMIT;
-  const displayMessage = isLong && !expanded
-    ? message.slice(0, COLLAPSE_CHAR_LIMIT).trim() + '...'
-    : message;
+  const isHtml = looksLikeHtml(message);
+  const plainLength = isHtml ? stripHtml(message).length : message.length;
+  const isLong = plainLength > COLLAPSE_CHAR_LIMIT;
+
+  const displayContent = useMemo(() => {
+    if (isHtml) {
+      const sanitized = DOMPurify.sanitize(message, {
+        ALLOWED_TAGS: ['p', 'br', 'h1', 'h2', 'h3', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'blockquote'],
+        ALLOWED_ATTR: ['style'],
+      });
+      if (isLong && !expanded) {
+        const plain = stripHtml(sanitized);
+        const truncated = plain.slice(0, COLLAPSE_CHAR_LIMIT).trim() + '...';
+        return { type: 'plain' as const, value: truncated };
+      }
+      return { type: 'html' as const, value: sanitized };
+    }
+    if (isLong && !expanded) {
+      return { type: 'plain' as const, value: message.slice(0, COLLAPSE_CHAR_LIMIT).trim() + '...' };
+    }
+    return { type: 'plain' as const, value: message };
+  }, [message, isHtml, isLong, expanded]);
 
   return (
     <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 mb-10 relative">
@@ -45,9 +72,20 @@ export function TeacherMessage({
           />
         )}
         <div className="w-full">
-          <p className="text-slate-600 leading-relaxed italic text-left text-lg pl-4 border-l-4 whitespace-pre-line" style={{ borderColor: 'var(--theme-accent)' }}>
-            "{displayMessage}"
-          </p>
+          <div
+            className="text-slate-600 leading-relaxed text-left text-lg pl-4 border-l-4 teacher-message-content [&_p]:my-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-bold [&_h3]:text-lg [&_h3]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic"
+            style={{ borderColor: 'var(--theme-accent)' }}
+          >
+            {displayContent.type === 'html' ? (
+              <div className="italic">
+                <span>"</span>
+                <div dangerouslySetInnerHTML={{ __html: displayContent.value }} />
+                <span>"</span>
+              </div>
+            ) : (
+              <p className="italic whitespace-pre-line">"{displayContent.value}"</p>
+            )}
+          </div>
           {isLong && (
             <button
               type="button"
