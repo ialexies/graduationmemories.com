@@ -135,7 +135,7 @@ export function ImageSlider({
   if (!images.length) {
     if (layout === 'grid') {
       return (
-        <section className="mb-10 py-12 rounded-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+        <section className="mb-10 py-12 rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-card-bg) 45%, var(--theme-accent))' }}>
           <h2 className="text-2xl font-bold text-center tracking-wide mb-6" style={{ color: 'color-mix(in srgb, var(--theme-accent) 95%, white)' }}>GALLERY</h2>
           <div className="flex items-center justify-center min-h-[200px]">
             <p className="text-sm" style={{ color: 'color-mix(in srgb, var(--theme-accent) 60%, white)' }}>No images yet</p>
@@ -165,7 +165,7 @@ export function ImageSlider({
 
   if (layout === 'grid') {
     return (
-      <section className="mb-10 py-10 sm:py-12 px-4 sm:px-6 rounded-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
+      <section className="mb-10 py-10 sm:py-12 px-4 sm:px-6 rounded-2xl" style={{ backgroundColor: 'color-mix(in srgb, var(--theme-card-bg) 45%, var(--theme-accent))' }}>
         <h2 className="text-2xl font-bold text-center tracking-wide mb-6" style={{ color: 'color-mix(in srgb, var(--theme-accent) 95%, white)' }}>{title}</h2>
         <div
           ref={gridScrollRef}
@@ -196,7 +196,7 @@ export function ImageSlider({
                 setLightboxIndex(i);
                 setLightboxOpen(true);
               }}
-              className="w-full h-full rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:ring-offset-2 focus:ring-offset-[var(--theme-card-bg)] transition-smooth hover:opacity-90 block"
+              className="w-full h-full rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:ring-offset-2 focus:ring-offset-[color-mix(in_srgb,var(--theme-card-bg)_45%,var(--theme-accent))] transition-smooth hover:opacity-90 block"
               style={{ backgroundColor: 'color-mix(in srgb, var(--theme-primary) 80%, transparent)' }}
               aria-label={`View image ${i + 1}`}
             >
