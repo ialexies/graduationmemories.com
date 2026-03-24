@@ -7,7 +7,7 @@ interface ClassPhotoCardProps {
 export function ClassPhotoCard({ classPhoto, batch, location }: ClassPhotoCardProps) {
   return (
     <div className="glass-morphism rounded-3xl p-3 photo-shadow mb-8">
-      <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-slate-200">
+      <div className="rounded-2xl overflow-hidden aspect-[3/4] bg-slate-200">
         <img
           src={classPhoto}
           alt="Main photo"
