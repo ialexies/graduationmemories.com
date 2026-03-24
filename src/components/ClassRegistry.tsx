@@ -28,19 +28,10 @@ function StudentAvatar({ src }: { src: string }) {
   );
 }
 
-function badgeText(label: string): string {
-  const words = label.trim().split(/\s+/).filter(Boolean);
-  if (words.length >= 2) return words.slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  return (label[0] ?? '?').toUpperCase();
-}
-
 export function ClassRegistry({ students, togetherSince, peopleLabel = 'Attendees', peopleTagLabel = 'VIP', showStudentPhotos }: ClassRegistryProps) {
   return (
     <section className="rounded-3xl p-8 text-white shadow-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
-      <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: 'var(--theme-accent)' }}>
-          {badgeText(peopleLabel)}
-        </span>
+      <h2 className="text-xl font-bold mb-6 text-center whitespace-pre-line">
         {peopleLabel}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 opacity-90">
@@ -57,7 +48,7 @@ export function ClassRegistry({ students, togetherSince, peopleLabel = 'Attendee
               <span>{student.name}</span>
             </div>
             {student.honor && (
-              <span className="text-xs shrink-0 opacity-90" style={{ color: 'var(--theme-accent)' }}>{peopleTagLabel}</span>
+              <span className="text-xs shrink-0 opacity-90 whitespace-pre-line" style={{ color: 'var(--theme-accent)' }}>{peopleTagLabel}</span>
             )}
           </div>
         ))}

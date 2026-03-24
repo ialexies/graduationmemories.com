@@ -14,14 +14,14 @@ export function HeroSection({ sectionName, quote, themeLabel = 'Event Memories',
       }}
     >
       <div className="relative z-10">
-        <p className="font-semibold tracking-widest uppercase text-sm mb-2 opacity-90" style={{ color: 'rgba(255,255,255,0.9)' }}>
+        <p className="font-semibold tracking-widest uppercase text-sm mb-2 opacity-90 whitespace-pre-line" style={{ color: 'rgba(255,255,255,0.9)' }}>
           {themeLabel}
         </p>
-        <h1 className="serif text-4xl md:text-5xl font-bold mb-4">
+        <h1 className="serif text-4xl md:text-5xl font-bold mb-4 whitespace-pre-line">
           {titleLabel}: {sectionName}
         </h1>
         <div className="h-1 w-20 mx-auto rounded-full mb-4" style={{ backgroundColor: 'var(--theme-accent)' }}></div>
-        <p className="text-lg opacity-80 italic max-w-md mx-auto">"{quote}"</p>
+        <p className="text-lg opacity-80 italic max-w-md mx-auto whitespace-pre-line">"{quote}"</p>
       </div>
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: 'var(--theme-accent)' }}></div>
     </header>

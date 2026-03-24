@@ -16,8 +16,8 @@ export function ClassPhotoCard({ classPhoto, batch, location }: ClassPhotoCardPr
         />
       </div>
       <div className="py-4 px-2 flex justify-between items-center text-sm font-medium">
-        <span style={{ color: 'var(--theme-accent)', opacity: 0.9 }}>{batch}</span>
-        <span style={{ color: 'var(--theme-accent)' }}>{location}</span>
+        <span style={{ color: 'var(--theme-accent)', opacity: 0.9 }} className="whitespace-pre-line">{batch}</span>
+        <span style={{ color: 'var(--theme-accent)' }} className="whitespace-pre-line">{location}</span>
       </div>
     </div>
   );

@@ -1041,15 +1041,15 @@ export function PageContentEditor() {
                   <label htmlFor={key} className={labelClass}>
                     {label}
                   </label>
-                  <input
+                  <textarea
                     id={key}
-                    type="text"
                     value={labels?.[key] ?? ""}
                     onChange={(e) => updateLabel(key, e.target.value)}
                     placeholder={displayLabels[key]}
                     className={inputClass}
+                    rows={2}
                   />
-                  <p className="text-xs text-slate-400 mt-0.5">Default: {displayLabels[key]}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Default: {displayLabels[key]} — Enter for line break</p>
                 </div>
               ))}
             </div>
@@ -1062,12 +1062,13 @@ export function PageContentEditor() {
             <label htmlFor="sectionName" className={labelClass}>
               Section name
             </label>
-            <input
+            <textarea
               id="sectionName"
-              type="text"
               value={post.sectionName}
               onChange={(e) => update("sectionName", e.target.value)}
               className={inputClass}
+              rows={2}
+              placeholder="Press Enter for a line break"
               required
             />
           </div>
@@ -1077,12 +1078,13 @@ export function PageContentEditor() {
                 <label htmlFor="batch" className={labelClass}>
                   Batch
                 </label>
-                <input
+                <textarea
                   id="batch"
-                  type="text"
                   value={post.batch}
                   onChange={(e) => update("batch", e.target.value)}
                   className={inputClass}
+                  rows={2}
+                  placeholder="Press Enter for a line break"
                   required
                 />
               </div>
@@ -1090,12 +1092,13 @@ export function PageContentEditor() {
                 <label htmlFor="location" className={labelClass}>
                   Location
                 </label>
-                <input
+                <textarea
                   id="location"
-                  type="text"
                   value={post.location}
                   onChange={(e) => update("location", e.target.value)}
                   className={inputClass}
+                  rows={2}
+                  placeholder="Press Enter for a line break"
                   required
                 />
               </div>
@@ -1105,12 +1108,13 @@ export function PageContentEditor() {
             <label htmlFor="quote" className={labelClass}>
               Quote
             </label>
-            <input
+            <textarea
               id="quote"
-              type="text"
               value={post.quote}
               onChange={(e) => update("quote", e.target.value)}
               className={inputClass}
+              rows={2}
+              placeholder="Press Enter for a line break"
               required
             />
           </div>
@@ -1420,8 +1424,9 @@ export function PageContentEditor() {
             <span className="text-green-700 font-medium text-sm animate-slide-up">Saved successfully.</span>
           )}
           <button
-            type="submit"
+            type="button"
             disabled={saving}
+            onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
             className="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-smooth btn-press"
           >
             {saving ? "Saving..." : saved ? "Saved!" : "Save"}
