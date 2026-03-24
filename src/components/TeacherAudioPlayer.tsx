@@ -2,12 +2,12 @@ import { useRef, useState } from "react";
 
 interface TeacherAudioPlayerProps {
   src: string;
-  label?: string;
+  authorLabel?: string;
 }
 
 export function TeacherAudioPlayer({
   src,
-  label = "Listen from Host",
+  authorLabel = "Host",
 }: TeacherAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [hasStarted, setHasStarted] = useState(false);
@@ -25,7 +25,7 @@ export function TeacherAudioPlayer({
   return (
     <section
       className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-sm border border-slate-100 mb-6"
-      aria-label="Host voice recording"
+      aria-label={`${authorLabel} voice recording`}
     >
       <div className="flex items-center gap-3">
         <button
@@ -49,7 +49,7 @@ export function TeacherAudioPlayer({
           </svg>
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-700 truncate">{label}</p>
+          <p className="text-sm font-medium text-slate-700 truncate">Listen from {authorLabel}</p>
           {!hasStarted ? (
             <button
               type="button"

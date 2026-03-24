@@ -7,7 +7,20 @@ import { TeacherAudioPlayer } from "../components/TeacherAudioPlayer";
 import { ClassRegistry } from "../components/ClassRegistry";
 import { Footer } from "../components/Footer";
 import { getThemeColors, toCssVars } from "../lib/themePresets";
-import type { Post, Footer as FooterType, PageLabels, SectionVisibility } from "../types";
+import type { Post, Footer as FooterType, PageLabels, SectionVisibility, PageType } from "../types";
+
+const DEFAULT_AUTHOR_BY_TYPE: Record<PageType, string> = {
+  graduation: 'Teacher',
+  wedding: 'Couple',
+  event: 'Host',
+  birthday: 'Host',
+  anniversary: 'Couple',
+  reunion: 'Host',
+  retirement: 'Honoree',
+  babyShower: 'Host',
+  farewell: 'Honoree',
+  engagement: 'Couple',
+};
 
 interface PostPageProps {
   post: Post;
@@ -15,11 +28,12 @@ interface PostPageProps {
   labels?: PageLabels | null;
   sectionVisibility?: SectionVisibility | null;
   colorTheme?: string;
+  pageType?: PageType;
 }
 
 const DEFAULT_VISIBILITY = { classPhoto: true, gallery: true, teacherMessage: true, teacherAudio: true, peopleList: true, studentPhotos: false };
 
-export function PostPage({ post, footer, labels, sectionVisibility, colorTheme = 'default' }: PostPageProps) {
+export function PostPage({ post, footer, labels, sectionVisibility, colorTheme = 'default', pageType = 'event' }: PostPageProps) {
   const vis = { ...DEFAULT_VISIBILITY, ...sectionVisibility };
   const themeLabel = labels?.themeLabel ?? 'Event Memories';
   const themeVars = toCssVars(getThemeColors(colorTheme));
@@ -62,7 +76,7 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
             {vis.teacherAudio !== false && post.teacherAudio && (
               <TeacherAudioPlayer
                 src={post.teacherAudio}
-                label={labels?.messageAuthorLabel ? `Listen from ${labels.messageAuthorLabel}` : undefined}
+                authorLabel={labels?.messageAuthorLabel?.trim() || DEFAULT_AUTHOR_BY_TYPE[pageType]}
               />
             )}
             {vis.gallery !== false && (
