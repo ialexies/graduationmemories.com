@@ -27,6 +27,8 @@ export function ImageSlider({
   const swipeHandled = useRef(false);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const gridDragRef = useRef({ isDragging: false, startX: 0, startScrollLeft: 0, didDrag: false });
+  const gridLastDragEndRef = useRef(0);
+  const [isGridHovered, setIsGridHovered] = useState(false);
 
   const slides = useMemo(
     () => images.map((src, i) => ({ src, alt: `${title} — image ${i + 1}` })),
@@ -52,10 +54,10 @@ export function ImageSlider({
   }, [images.length]);
 
   useEffect(() => {
-    if (images.length <= 1) return;
+    if (layout !== 'carousel' || images.length <= 1) return;
     const id = setInterval(goNext, autoPlayInterval);
     return () => clearInterval(id);
-  }, [images.length, autoPlayInterval, goNext]);
+  }, [layout, images.length, autoPlayInterval, goNext]);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -119,6 +121,9 @@ export function ImageSlider({
   }, []);
 
   const handleGridPointerUp = useCallback(() => {
+    if (gridDragRef.current.didDrag) {
+      gridLastDragEndRef.current = Date.now();
+    }
     gridDragRef.current.isDragging = false;
   }, []);
 
@@ -131,6 +136,41 @@ export function ImageSlider({
     el.addEventListener('touchmove', onTouchMove, { passive: false });
     return () => el.removeEventListener('touchmove', onTouchMove);
   }, [layout, images.length]);
+
+  useEffect(() => {
+    if (layout !== 'grid' || images.length <= 1) return;
+    const el = gridScrollRef.current;
+    if (!el) return;
+    const scrollSpeedPxPerSec = 65;
+    const pauseAfterDragMs = 3000;
+    let rafId: number;
+    let lastTime = 0;
+    const tick = (now: number) => {
+      if (!lastTime) lastTime = now;
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      if (lightboxOpen || isGridHovered || Date.now() - gridLastDragEndRef.current < pauseAfterDragMs) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 0) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      el.scrollLeft += scrollSpeedPxPerSec * dt;
+      if (el.scrollLeft >= maxScroll) {
+        el.scrollLeft = 0;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [layout, images.length, lightboxOpen, isGridHovered]);
 
   if (!images.length) {
     if (layout === 'grid') {
@@ -176,10 +216,14 @@ export function ImageSlider({
             gridAutoColumns: 'minmax(120px, 140px)',
             maxHeight: 'calc(3 * 150px + 2 * 12px + 48px)',
           }}
+          onMouseEnter={() => setIsGridHovered(true)}
+          onMouseLeave={() => {
+            setIsGridHovered(false);
+            handleGridPointerUp();
+          }}
           onMouseDown={handleGridPointerDown}
           onMouseMove={handleGridPointerMove}
           onMouseUp={handleGridPointerUp}
-          onMouseLeave={handleGridPointerUp}
           onTouchStart={handleGridPointerDown}
           onTouchMove={handleGridPointerMove}
           onTouchEnd={handleGridPointerUp}

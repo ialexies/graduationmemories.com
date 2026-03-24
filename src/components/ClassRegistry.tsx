@@ -28,12 +28,18 @@ function StudentAvatar({ src }: { src: string }) {
   );
 }
 
+function badgeText(label: string): string {
+  const words = label.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return words.slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  return (label[0] ?? '?').toUpperCase();
+}
+
 export function ClassRegistry({ students, togetherSince, peopleLabel = 'Attendees', peopleTagLabel = 'VIP', showStudentPhotos }: ClassRegistryProps) {
   return (
     <section className="rounded-3xl p-8 text-white shadow-2xl" style={{ backgroundColor: 'var(--theme-card-bg)' }}>
       <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs" style={{ backgroundColor: 'var(--theme-accent)' }}>
-          LIST
+        <span className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold" style={{ backgroundColor: 'var(--theme-accent)' }}>
+          {badgeText(peopleLabel)}
         </span>
         {peopleLabel}
       </h2>
