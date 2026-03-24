@@ -1,16 +1,21 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import type { TranscriptWord } from "../types";
 
 interface TeacherAudioPlayerProps {
   src: string;
   authorLabel?: string;
+  transcript?: TranscriptWord[];
 }
 
 export function TeacherAudioPlayer({
   src,
   authorLabel = "Host",
+  transcript,
 }: TeacherAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const [currentWordIndex, setCurrentWordIndex] = useState<number>(-1);
 
   const handlePlayClick = () => {
     const el = audioRef.current;
@@ -20,7 +25,27 @@ export function TeacherAudioPlayer({
       .catch(() => {});
   };
 
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el || !transcript?.length) return;
+    const onTimeUpdate = () => {
+      const t = el.currentTime;
+      const idx = transcript.findIndex((w) => t >= w.start && t <= w.end);
+      setCurrentWordIndex(idx >= 0 ? idx : -1);
+    };
+    el.addEventListener("timeupdate", onTimeUpdate);
+    return () => el.removeEventListener("timeupdate", onTimeUpdate);
+  }, [transcript]);
+
+  useEffect(() => {
+    if (currentWordIndex < 0 || !transcriptRef.current) return;
+    const span = transcriptRef.current.querySelector(`[data-word-idx="${currentWordIndex}"]`);
+    span?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [currentWordIndex]);
+
   if (!src?.trim()) return null;
+
+  const hasTranscript = transcript && transcript.length > 0;
 
   return (
     <section
@@ -71,6 +96,26 @@ export function TeacherAudioPlayer({
         autoPlay={hasStarted}
         className={`mt-2 w-full h-10 max-w-full ${hasStarted ? "block" : "hidden"}`}
       />
+      {hasTranscript && (
+        <div
+          ref={transcriptRef}
+          className="mt-3 max-h-24 overflow-y-auto rounded-lg bg-slate-50/80 px-3 py-2 text-sm text-slate-600 leading-relaxed"
+          role="region"
+          aria-live="polite"
+          aria-label="Transcription"
+        >
+          {transcript.map((w, i) => (
+            <span
+              key={i}
+              data-word-idx={i}
+              className={i === currentWordIndex ? "font-semibold text-slate-900" : ""}
+              style={i === currentWordIndex ? { color: "var(--theme-accent)" } : undefined}
+            >
+              {w.word}{" "}
+            </span>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

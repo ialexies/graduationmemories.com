@@ -88,6 +88,12 @@ export interface Student {
   photo?: string;
 }
 
+export interface TranscriptWord {
+  start: number;
+  end: number;
+  word: string;
+}
+
 export interface Post {
   sectionName: string;
   batch: string;
@@ -100,6 +106,7 @@ export interface Post {
   teacherPhoto?: string;
   teacherTitle: string;
   teacherAudio?: string;
+  teacherAudioTranscript?: TranscriptWord[];
   students: Student[];
   togetherSince: string;
 }

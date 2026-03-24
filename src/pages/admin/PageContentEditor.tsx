@@ -4,12 +4,14 @@ import { apiFetch } from "../../lib/api";
 import { Skeleton } from "../../components/Skeleton";
 import { RichTextEditor } from "../../components/RichTextEditor";
 import { THEME_OPTIONS, getThemeColors } from "../../lib/themePresets";
+import { parseGoogleSpeechToText } from "../../lib/transcript";
 import type {
   Post,
   Student,
   PageType,
   PageLabels,
   SectionVisibility,
+  TranscriptWord,
 } from "../../types";
 
 const inputClass =
@@ -212,6 +214,115 @@ function AudioUploadSlot({
           onChange={onFileChange}
         />
       </div>
+    </div>
+  );
+}
+
+function TranscriptSlot({
+  transcript,
+  onSetTranscript,
+  onClear,
+  disabled,
+}: {
+  transcript: TranscriptWord[] | undefined;
+  onSetTranscript: (t: TranscriptWord[]) => void;
+  onClear: () => void;
+  disabled?: boolean;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result as string);
+        const words = parseGoogleSpeechToText(json);
+        if (words.length > 0) {
+          onSetTranscript(words);
+        }
+      } catch (_) {
+        // ignore
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handlePaste = () => {
+    const raw = textareaRef.current?.value?.trim();
+    if (!raw) return;
+    try {
+      const json = JSON.parse(raw);
+      const words = parseGoogleSpeechToText(json);
+      if (words.length > 0) {
+        onSetTranscript(words);
+      }
+    } catch (_) {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="space-y-2 pt-2 border-t border-slate-200">
+      <label className={labelClass}>Transcription (optional)</label>
+      <p className="text-xs text-slate-500">
+        Upload or paste Google Speech-to-Text JSON for synchronized captions during playback.
+      </p>
+      {transcript && transcript.length > 0 ? (
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-600">
+            {transcript.length} words loaded
+          </span>
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={disabled}
+            className="text-sm text-red-600 hover:underline disabled:opacity-50"
+          >
+            Clear transcript
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className="text-sm py-1.5 px-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 disabled:opacity-50"
+          >
+            Upload JSON
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleFileChange}
+            aria-label="Upload transcript JSON file"
+          />
+          <div className="flex-1 min-w-0 flex gap-2">
+            <textarea
+              ref={textareaRef}
+              id="transcript-json-paste"
+              placeholder="Paste Google Speech-to-Text JSON here…"
+              className={`${inputClass} text-sm h-20`}
+              disabled={disabled}
+              aria-label="Paste transcript JSON"
+            />
+            <button
+              type="button"
+              onClick={handlePaste}
+              disabled={disabled}
+              className="text-sm py-1.5 px-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 shrink-0 self-end"
+            >
+              Parse
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1135,15 +1246,25 @@ export function PageContentEditor() {
               />
             </div>
             {sectionVisibility.teacherAudio !== false && (
-              <AudioUploadSlot
-                src={post.teacherAudio || ""}
-                onRemove={handleRemoveTeacherAudio}
-                onFileChange={handleTeacherAudioUpload}
-                label={`${displayLabels.messageAuthorLabel} voice recording`}
-                uploading={uploading}
-                inputRef={teacherAudioInputRef}
-                error={audioError}
-              />
+              <div className="space-y-2">
+                <AudioUploadSlot
+                  src={post.teacherAudio || ""}
+                  onRemove={handleRemoveTeacherAudio}
+                  onFileChange={handleTeacherAudioUpload}
+                  label={`${displayLabels.messageAuthorLabel} voice recording`}
+                  uploading={uploading}
+                  inputRef={teacherAudioInputRef}
+                  error={audioError}
+                />
+                {post.teacherAudio && (
+                  <TranscriptSlot
+                    transcript={post.teacherAudioTranscript}
+                    onSetTranscript={(t) => update("teacherAudioTranscript", t)}
+                    onClear={() => update("teacherAudioTranscript", undefined)}
+                    disabled={saving}
+                  />
+                )}
+              </div>
             )}
           </div>
         )}

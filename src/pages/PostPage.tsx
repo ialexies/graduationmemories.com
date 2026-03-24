@@ -77,6 +77,7 @@ export function PostPage({ post, footer, labels, sectionVisibility, colorTheme =
               <TeacherAudioPlayer
                 src={post.teacherAudio}
                 authorLabel={labels?.messageAuthorLabel?.trim() || DEFAULT_AUTHOR_BY_TYPE[pageType]}
+                transcript={post.teacherAudioTranscript}
               />
             )}
             {vis.gallery !== false && (

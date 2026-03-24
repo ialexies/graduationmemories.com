@@ -108,6 +108,12 @@ export function initDb() {
   if (audioCols.length === 0) {
     db.exec('ALTER TABLE posts_content ADD COLUMN teacher_audio TEXT');
   }
+
+  // Migration: add teacher_audio_transcript to posts_content if missing
+  const transcriptCols = db.prepare("SELECT name FROM pragma_table_info('posts_content') WHERE name = 'teacher_audio_transcript'").all();
+  if (transcriptCols.length === 0) {
+    db.exec('ALTER TABLE posts_content ADD COLUMN teacher_audio_transcript TEXT');
+  }
 }
 
 export function seedDb() {
@@ -304,8 +310,8 @@ export function createPage(pageId, type = 'event') {
   db.prepare(`
     INSERT INTO posts_content (
       page_id, section_name, batch, location, quote, class_photo, gallery,
-      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since
-    ) VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, '[]', '')
+      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, teacher_audio_transcript, students, together_since
+    ) VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, NULL, '[]', '')
   `).run(pageId);
 }
 
@@ -321,19 +327,19 @@ export function duplicatePage(sourceId, newId) {
   if (content) {
     db.prepare(`
       INSERT INTO posts_content (page_id, section_name, batch, location, quote, class_photo, gallery,
-        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, teacher_audio_transcript, students, together_since)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       newId, content.section_name, content.batch, content.location, content.quote,
       content.class_photo, content.gallery, content.teacher_message, content.teacher_name,
       content.teacher_photo, content.teacher_title, content.teacher_audio || null,
-      content.students, content.together_since
+      content.teacher_audio_transcript || null, content.students, content.together_since
     );
   } else {
     db.prepare(`
       INSERT INTO posts_content (page_id, section_name, batch, location, quote, class_photo, gallery,
-        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since)
-      VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, '[]', '')
+        teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, teacher_audio_transcript, students, together_since)
+      VALUES (?, '', '', '', '', '', '[]', '', '', NULL, '', NULL, NULL, '[]', '')
     `).run(newId);
   }
   if (labels) {
@@ -468,6 +474,7 @@ export function getPostContent(pageId) {
     teacherPhoto: row.teacher_photo,
     teacherTitle: row.teacher_title,
     teacherAudio: row.teacher_audio || undefined,
+    teacherAudioTranscript: row.teacher_audio_transcript ? JSON.parse(row.teacher_audio_transcript) : undefined,
     students: JSON.parse(row.students || '[]'),
     togetherSince: row.together_since,
   };
@@ -503,8 +510,8 @@ export function savePostContent(pageId, post) {
   db.prepare(`
     INSERT INTO posts_content (
       page_id, section_name, batch, location, quote, class_photo, gallery,
-      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, students, together_since, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      teacher_message, teacher_name, teacher_photo, teacher_title, teacher_audio, teacher_audio_transcript, students, together_since, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(page_id) DO UPDATE SET
       section_name = excluded.section_name,
       batch = excluded.batch,
@@ -517,6 +524,7 @@ export function savePostContent(pageId, post) {
       teacher_photo = excluded.teacher_photo,
       teacher_title = excluded.teacher_title,
       teacher_audio = excluded.teacher_audio,
+      teacher_audio_transcript = excluded.teacher_audio_transcript,
       students = excluded.students,
       together_since = excluded.together_since,
       updated_at = datetime('now')
@@ -533,6 +541,7 @@ export function savePostContent(pageId, post) {
     post.teacherPhoto || null,
     post.teacherTitle ?? '',
     post.teacherAudio || null,
+    post.teacherAudioTranscript ? JSON.stringify(post.teacherAudioTranscript) : null,
     JSON.stringify(post.students || []),
     post.togetherSince ?? ''
   );
