@@ -9,7 +9,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "test:v2": "node --test server/v2-contract.test.mjs"
   },
   "dependencies": {
     "@tiptap/extension-text-align": "^3.20.4",

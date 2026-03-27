@@ -168,11 +168,102 @@ export function saveV2Draft(pageId, content, user, skipAccessCheck = false) {
 
   db.prepare(`UPDATE v2_pages SET updated_at = datetime('now') WHERE id = ?`).run(pageId);
 
+  v2Log(
+    { action: 'draft_saved', pageId, userId: user.id },
+    { versionNo: nextVersion, blockCount: blocks.length }
+  );
+
   return {
     id: versionId,
     versionNo: nextVersion,
     savedAt: nowIso(),
   };
+}
+
+export function v2Log(event, detail = {}) {
+  const line = JSON.stringify({
+    ts: new Date().toISOString(),
+    scope: 'v2',
+    ...event,
+    ...detail,
+  });
+  console.log(line);
+}
+
+function str(v) {
+  return typeof v === 'string' ? v : '';
+}
+
+function isProbablyUrl(s) {
+  const t = String(s).trim();
+  if (!t || t === '#') return true;
+  try {
+    if (t.startsWith('/')) return true;
+    const u = new URL(t);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** @returns {{ errors: { message: string, blockId?: string }[], warnings: { message: string, blockId?: string }[] }} */
+export function lintV2ContentForPublish(content) {
+  const errors = [];
+  const warnings = [];
+  if (!content || typeof content !== 'object') {
+    errors.push({ message: 'Content is required' });
+    return { errors, warnings };
+  }
+  const raw = JSON.stringify(content);
+  if (raw.length > 4_000_000) {
+    warnings.push({ message: 'Page JSON is very large' });
+  }
+  const blocks = content.blocks || [];
+  for (const b of blocks) {
+    if (!b || b.visibility === false) continue;
+    const p = b.props || {};
+    const id = b.id;
+    switch (b.type) {
+      case 'header':
+        if (!str(p.title).trim()) errors.push({ message: 'Header: title is empty', blockId: id });
+        break;
+      case 'cta':
+        if (!str(p.label).trim()) warnings.push({ message: 'CTA: label is empty', blockId: id });
+        if (str(p.href) && !isProbablyUrl(p.href)) warnings.push({ message: 'CTA: link URL may be invalid', blockId: id });
+        break;
+      case 'image':
+        if (!str(p.src).trim()) errors.push({ message: 'Image: URL is required', blockId: id });
+        if (str(p.src) && !str(p.alt).trim()) warnings.push({ message: 'Image: alt text is empty', blockId: id });
+        break;
+      case 'imageGrid': {
+        const imgs = Array.isArray(p.images) ? p.images.filter((x) => typeof x === 'string') : [];
+        if (imgs.length === 0) warnings.push({ message: 'Image grid: no images', blockId: id });
+        break;
+      }
+      case 'audio':
+        if (!str(p.src).trim()) warnings.push({ message: 'Audio: URL is empty', blockId: id });
+        break;
+      case 'footer':
+        if (!str(p.shopName).trim()) warnings.push({ message: 'Footer: shop name is empty', blockId: id });
+        if (str(p.linkUrl) && !isProbablyUrl(p.linkUrl)) warnings.push({ message: 'Footer: link URL may be invalid', blockId: id });
+        break;
+      default:
+        break;
+    }
+  }
+  const meta = content.meta;
+  if (meta && typeof meta === 'object' && !Array.isArray(meta) && meta.seo && typeof meta.seo === 'object') {
+    const og = str(meta.seo.ogImage);
+    if (og && !isProbablyUrl(og)) warnings.push({ message: 'SEO: OG image URL may be invalid' });
+  }
+  return { errors, warnings };
+}
+
+function insertAuditLog(pageId, userId, action, detail) {
+  const id = newId('v2a');
+  db.prepare(
+    'INSERT INTO v2_audit_log (id, page_id, user_id, action, detail_json) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, pageId, userId, action, JSON.stringify(detail || {}));
 }
 
 export function publishV2Latest(pageId, user) {
@@ -181,13 +272,26 @@ export function publishV2Latest(pageId, user) {
     throw new Error('Admin access required');
   }
   const latest = db.prepare(`
-    SELECT id, version_no
+    SELECT id, version_no, content_json
     FROM v2_page_versions
     WHERE page_id = ?
     ORDER BY version_no DESC
     LIMIT 1
   `).get(pageId);
   if (!latest) throw new Error('No draft exists to publish');
+
+  let parsed;
+  try {
+    parsed = JSON.parse(latest.content_json);
+  } catch {
+    throw new Error('Invalid draft content');
+  }
+  const lint = lintV2ContentForPublish(parsed);
+  if (lint.errors.length) {
+    const msg = lint.errors.map((e) => e.message).join('; ');
+    v2Log({ action: 'publish_blocked', pageId, userId: user.id }, { reason: 'lint', errors: lint.errors });
+    throw new Error(`Publish blocked: ${msg}`);
+  }
 
   const tx = db.transaction(() => {
     db.prepare('UPDATE v2_page_versions SET is_published = 0 WHERE page_id = ?').run(pageId);
@@ -197,18 +301,30 @@ export function publishV2Latest(pageId, user) {
       SET published_version_id = ?, status = 'published', published_at = datetime('now'), updated_at = datetime('now')
       WHERE id = ?
     `).run(latest.id, pageId);
+    insertAuditLog(pageId, user.id, 'publish', { versionNo: latest.version_no, warnings: lint.warnings });
   });
   tx();
-  return { publishedVersionNo: latest.version_no, publishedAt: nowIso() };
+  v2Log({ action: 'publish', pageId, userId: user.id }, { versionNo: latest.version_no, warningCount: lint.warnings.length });
+  return { publishedVersionNo: latest.version_no, publishedAt: nowIso(), warnings: lint.warnings };
 }
 
 export function getV2PublicBySlug(slug) {
-  const page = db.prepare(`
+  let page = db.prepare(`
     SELECT p.*, t.tokens_json
     FROM v2_pages p
     LEFT JOIN v2_themes t ON t.id = p.theme_id
     WHERE p.slug = ?
   `).get(slug);
+  if (!page) {
+    const red = db.prepare('SELECT page_id FROM v2_slug_redirects WHERE from_slug = ?').get(slug);
+    if (!red) return null;
+    page = db.prepare(`
+      SELECT p.*, t.tokens_json
+      FROM v2_pages p
+      LEFT JOIN v2_themes t ON t.id = p.theme_id
+      WHERE p.id = ?
+    `).get(red.page_id);
+  }
   if (!page || !page.published_version_id) return null;
   const version = db.prepare(`
     SELECT content_json, version_no, created_at
@@ -228,6 +344,7 @@ export function getV2PublicBySlug(slug) {
     },
     labels: content.labels || {},
     blocks: content.blocks || [],
+    meta: content.meta && typeof content.meta === 'object' ? content.meta : {},
     version: { no: version.version_no, createdAt: version.created_at },
   };
 }
@@ -353,5 +470,55 @@ export function canAccessLegacySourceForMigration(user, legacyPageId) {
   if (user.role === 'admin') return true;
   const editable = new Set(getEditablePageIds(user.id, user.role));
   return editable.has(legacyPageId);
+}
+
+export function patchV2Page(pageId, { slug: newSlug, title: newTitle }, user) {
+  if (!canReadV2Page(user.id, user.role, pageId)) return null;
+  const page = db.prepare('SELECT * FROM v2_pages WHERE id = ?').get(pageId);
+  if (!page) return null;
+
+  if (typeof newTitle === 'string' && newTitle.trim()) {
+    db.prepare('UPDATE v2_pages SET title = ?, updated_at = datetime(\'now\') WHERE id = ?').run(newTitle.trim(), pageId);
+  }
+
+  if (typeof newSlug === 'string' && newSlug.trim()) {
+    const slug = newSlug.trim().toLowerCase();
+    if (!/^[a-z0-9-]{3,64}$/.test(slug)) {
+      throw new Error('slug must be 3-64 chars: lowercase letters, numbers, hyphens');
+    }
+    if (slug !== page.slug) {
+      const dup = db.prepare('SELECT id FROM v2_pages WHERE slug = ? AND id != ?').get(slug, pageId);
+      if (dup) throw new Error('Slug already in use');
+      db.prepare('INSERT INTO v2_slug_redirects (from_slug, page_id) VALUES (?, ?)').run(page.slug, pageId);
+      db.prepare('UPDATE v2_pages SET slug = ?, updated_at = datetime(\'now\') WHERE id = ?').run(slug, pageId);
+      v2Log({ action: 'slug_changed', pageId, userId: user.id }, { from: page.slug, to: slug });
+    }
+  }
+
+  return getV2PageById(pageId, user);
+}
+
+export function listPublishedV2SlugsForSitemap() {
+  return db
+    .prepare(
+      `
+    SELECT p.slug, p.updated_at, p.published_at
+    FROM v2_pages p
+    WHERE p.status = 'published' AND p.published_version_id IS NOT NULL
+    ORDER BY p.slug
+  `
+    )
+    .all();
+}
+
+export function getV2PageExportPayload(pageId, user) {
+  const data = getV2PageById(pageId, user);
+  if (!data) return null;
+  return {
+    exportedAt: nowIso(),
+    page: data.page,
+    latestDraft: data.latestDraft,
+    published: data.published,
+  };
 }
 

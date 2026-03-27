@@ -203,14 +203,35 @@ Remove a block from the latest draft content.
 - `blocks[].props`: must pass block schema validator.
 - max blocks per page: configurable safeguard (recommended 200).
 
+## `PATCH /api/v2/pages/:id`
+
+Update DB-backed fields: `{ "title"?: string, "slug"?: string }`. Changing `slug` inserts a row in `v2_slug_redirects` so the previous slug still resolves to this page.
+
+## `GET /api/v2/pages/:id/export.json`
+
+Authenticated export of page row plus latest draft and published snapshots (JSON).
+
+## Public feeds
+
+- `GET /api/v2/sitemap.xml` — published V2 page URLs (no auth).
+- `GET /api/v2/rss.xml` — simple RSS for published V2 pages (no auth).
+
 ## Implemented Notes
 
 - Current V2 editor route: `/admin/v2/pages` and `/admin/v2/pages/:id`.
 - Current public V2 route: `/v2/:slug`.
 - Current editor supports:
   - drag-and-drop block reorder
-  - block add/remove
-  - JSON inspector editing
+  - typed block inspector with **This block** / **Page settings** tabs and Advanced JSON fallback
+  - block add/remove/duplicate, templates, local snippet library
+  - SEO fields stored in `content.meta.seo`
+  - page labels edited via friendly fields (stored in `content.labels`)
+  - publish modal with lint errors/warnings and draft vs published summary
+  - autosave (debounced) and manual Save Draft
   - device preview toolbar (desktop/tablet/mobile/custom)
+  - preview zoom control (`-`, `%`, `+`)
   - width input + drag-resize handle
-  - ruler showing active preview width scale
+  - click-to-select block from preview into inspector
+  - image upload support in V2 inspector via existing legacy endpoint `POST /api/admin/pages/:id/upload`
+  - image block builder props persisted in block `props` (layout/style/caption/focal/loading presets)
+  - block removal action in inspector (left-list quick delete action is planned)

@@ -54,18 +54,40 @@ Use this for general-purpose pages with reusable sections.
 ### In the V2 editor
 
 - **Blocks panel** (left)
-  - Add block types (Header, Rich text, People list, Image grid, CTA, Footer)
+  - Add block types (Header, Rich text, People list, Image grid, CTA, Footer, Image, Author card, Audio)
   - Drag blocks to reorder
 - **Preview canvas** (center)
   - Device-style toolbar: Desktop, Tablet, Mobile, Custom
   - Width input (px) for precise preview size
+  - Zoom control (`-`, preset %, `+`) for close-up editing
   - Drag-resize handle on the right edge of canvas
-  - Ruler scale above preview reflects current selected width
+  - Scrollable preview area for long pages
+  - Click any block in preview to auto-select it in the inspector
 - **Inspector panel** (right)
-  - Edit selected block JSON props
+  - Two tabs: **This block** and **Page settings**
+  - Friendly form fields for SEO and page labels (JSON is optional under Advanced)
+  - Rich text editor uses toolbar controls (not raw HTML)
+  - Image blocks include upload + builder-style layout controls
   - Toggle visibility
   - Move up/down
   - Remove block
+
+### Block deletion
+
+- Current: Select a block, then click **Remove block** in the inspector.
+- Safety: Deleting a block removes it from the current draft; save draft or publish to persist that change.
+- Planned UX improvement: quick delete action directly in each block row on the left list.
+
+### V2 image editing (builder-style)
+
+- Upload directly from the image block inspector (no need to paste paths).
+- Control layout and style with safe presets:
+  - Width and alignment
+  - Aspect ratio, fit mode, focal point
+  - Corner radius, border, shadow
+  - Caption text + optional caption link
+  - Alt text guidance + loading behavior (lazy/eager)
+- Existing pages remain compatible: missing options fall back to defaults.
 
 ### Save and publish
 

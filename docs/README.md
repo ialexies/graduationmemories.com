@@ -31,3 +31,4 @@ For full setup, see [DEVELOPER.md](./DEVELOPER.md).
 - **[V2_API_SPEC.md](./V2_API_SPEC.md)** — V2 endpoint contracts and validation expectations
 - **[V2_MIGRATION.md](./V2_MIGRATION.md)** — Legacy-to-V2 migration mapping and rollout safety
 - **[V2_IMPLEMENTATION_PLAN.md](./V2_IMPLEMENTATION_PLAN.md)** — Phase-by-phase execution checklist
+- **[V2_OPERATIONS.md](./V2_OPERATIONS.md)** — Deploy, backups, sitemap/RSS, and V2 logging notes

@@ -542,3 +542,19 @@ Core mappings:
   - assets
   - audit logs
 - Clarify soft-delete vs hard-delete behavior and authorized roles.
+
+## 23) Current UX Snapshot and Near-Term Improvements
+
+### Current editor UX snapshot
+
+- Right inspector uses two modes: **This block** and **Page settings**.
+- Page labels are edited through friendly fields; raw JSON remains optional under Advanced.
+- Rich text uses toolbar editing (TipTap) instead of raw HTML fields.
+- Preview supports device widths, custom width, zoom controls, and click-to-select block behavior.
+- Image blocks support direct upload and preset-based styling controls.
+
+### Near-term UX improvements (planned)
+
+- Add a quick **delete block** action in each left block list row.
+- Keep inspector **Remove block** as a secondary fallback action.
+- Use confirmation before delete and preserve predictable selection after removal.

@@ -155,6 +155,23 @@ export function initDb() {
   db.exec('CREATE INDEX IF NOT EXISTS idx_v2_pages_slug ON v2_pages(slug)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_v2_versions_page_version ON v2_page_versions(page_id, version_no DESC)');
   db.exec('CREATE INDEX IF NOT EXISTS idx_v2_versions_page_created ON v2_page_versions(page_id, created_at DESC)');
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS v2_audit_log (
+      id TEXT PRIMARY KEY,
+      page_id TEXT NOT NULL,
+      user_id INTEGER,
+      action TEXT NOT NULL,
+      detail_json TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS v2_slug_redirects (
+      from_slug TEXT PRIMARY KEY,
+      page_id TEXT NOT NULL REFERENCES v2_pages(id),
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_v2_audit_page ON v2_audit_log(page_id, created_at DESC)');
 }
 
 export function seedDb() {

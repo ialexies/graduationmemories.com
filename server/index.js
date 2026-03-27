@@ -26,6 +26,10 @@ import {
   assignV2PageToUser,
   canAccessV2Page,
   canAccessLegacySourceForMigration,
+  patchV2Page,
+  listPublishedV2SlugsForSitemap,
+  getV2PageExportPayload,
+  v2Log,
 } from './v2.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -43,7 +47,17 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) =>
     req.path === '/api/admin/backup' ||
-    (req.method === 'POST' && req.path === '/api/admin/backup/restore'),
+    (req.method === 'POST' && req.path === '/api/admin/backup/restore') ||
+    req.path === '/api/v2/sitemap.xml' ||
+    req.path === '/api/v2/rss.xml',
+});
+
+const v2MutationLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 45,
+  message: { error: 'Too many V2 saves, please try again shortly' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 const loginLimiter = rateLimit({
@@ -114,6 +128,58 @@ app.get('/api/v2/public/:slug', (req, res) => {
   res.json(data);
 });
 
+app.get('/api/v2/sitemap.xml', (req, res) => {
+  try {
+    const rows = listPublishedV2SlugsForSitemap();
+    const host = req.get('host') || 'localhost';
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
+    const base = `${proto}://${host}`;
+    const urls = rows
+      .map((r) => {
+        const loc = `${base}/v2/${encodeURIComponent(r.slug)}`;
+        const lastmod = r.published_at || r.updated_at || '';
+        return `<url><loc>${escapeXml(loc)}</loc>${lastmod ? `<lastmod>${escapeXml(lastmod)}</lastmod>` : ''}</url>`;
+      })
+      .join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`;
+    res.type('application/xml');
+    res.send(xml);
+  } catch (err) {
+    console.error('sitemap error:', err);
+    res.status(500).send('Error');
+  }
+});
+
+app.get('/api/v2/rss.xml', (req, res) => {
+  try {
+    const rows = listPublishedV2SlugsForSitemap();
+    const host = req.get('host') || 'localhost';
+    const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http').split(',')[0].trim();
+    const base = `${proto}://${host}`;
+    const items = rows
+      .map((r) => {
+        const link = `${base}/v2/${encodeURIComponent(r.slug)}`;
+        const pub = r.published_at || r.updated_at || '';
+        return `<item><title>${escapeXml(r.slug)}</title><link>${escapeXml(link)}</link><guid>${escapeXml(link)}</guid>${pub ? `<pubDate>${escapeXml(pub)}</pubDate>` : ''}</item>`;
+      })
+      .join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>V2 pages</title><link>${escapeXml(base)}</link><description>Published V2 pages</description>${items}</channel></rss>`;
+    res.type('application/xml');
+    res.send(xml);
+  } catch (err) {
+    console.error('rss error:', err);
+    res.status(500).send('Error');
+  }
+});
+
+function escapeXml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 app.use('/api/v2', authMiddleware);
 
 app.get('/api/v2/pages', (req, res) => {
@@ -153,7 +219,34 @@ app.get('/api/v2/pages/:id', (req, res) => {
   res.json(data);
 });
 
-app.put('/api/v2/pages/:id/draft', (req, res) => {
+app.patch('/api/v2/pages/:id', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const { slug, title } = req.body || {};
+    const out = patchV2Page(req.params.id, { slug, title }, req.user);
+    if (!out) return res.status(404).json({ error: 'V2 page not found' });
+    res.json(out);
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to update page' });
+  }
+});
+
+app.get('/api/v2/pages/:id/export.json', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const payload = getV2PageExportPayload(req.params.id, req.user);
+    if (!payload) return res.status(404).json({ error: 'V2 page not found' });
+    res.json(payload);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Export failed' });
+  }
+});
+
+app.put('/api/v2/pages/:id/draft', v2MutationLimiter, (req, res) => {
   try {
     if (!canAccessV2Page(req.user, req.params.id)) {
       return res.status(403).json({ error: 'Access denied to this V2 page' });
@@ -166,7 +259,7 @@ app.put('/api/v2/pages/:id/draft', (req, res) => {
   }
 });
 
-app.post('/api/v2/pages/:id/publish', (req, res) => {
+app.post('/api/v2/pages/:id/publish', v2MutationLimiter, (req, res) => {
   try {
     if (!canAccessV2Page(req.user, req.params.id)) {
       return res.status(403).json({ error: 'Access denied to this V2 page' });
@@ -236,6 +329,10 @@ app.post('/api/v2/migration/preview/:legacyPageId', (req, res) => {
   }
   const result = previewLegacyToV2(req.params.legacyPageId);
   if (!result) return res.status(404).json({ error: 'Legacy page not found' });
+  v2Log(
+    { action: 'migration_preview', userId: req.user.id },
+    { legacyPageId: req.params.legacyPageId, blockCount: result.blocks?.length ?? 0 }
+  );
   res.json({ ok: true, sourcePageId: req.params.legacyPageId, result });
 });
 
