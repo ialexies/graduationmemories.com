@@ -123,3 +123,39 @@ export interface PostsData {
   posts: Record<string, Post>;
   footer: Footer;
 }
+
+export type V2BlockType =
+  | 'header'
+  | 'richText'
+  | 'peopleList'
+  | 'imageGrid'
+  | 'cta'
+  | 'footer'
+  | 'image'
+  | 'authorCard'
+  | 'audio';
+
+export interface V2Block {
+  id: string;
+  type: V2BlockType;
+  visibility?: boolean;
+  styleVariant?: string;
+  props: Record<string, unknown>;
+}
+
+export interface V2PageContent {
+  labels: Record<string, string>;
+  blocks: V2Block[];
+  meta?: Record<string, unknown>;
+}
+
+export interface V2PageRecord {
+  id: string;
+  slug: string;
+  title: string;
+  status: 'draft' | 'published' | 'archived';
+  theme_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string | null;
+}

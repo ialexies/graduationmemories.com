@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/admin/content', label: 'Content', adminOnly: false },
   { to: '/admin/footer', label: 'Footer', adminOnly: false },
   { to: '/admin/pages', label: 'Pages', adminOnly: true },
+  { to: '/admin/v2/pages', label: 'V2 Pages', adminOnly: false },
   { to: '/admin/tokens', label: 'Tokens', adminOnly: true },
   { to: '/admin/users', label: 'Users', adminOnly: true },
   { to: '/admin/backup', label: 'Backup', adminOnly: true },
@@ -107,7 +108,7 @@ export function AdminLayout() {
         </>
       )}
 
-      <main className="p-4 sm:p-6 max-w-4xl">
+      <main className="p-4 sm:p-6 w-full max-w-none">
         <Outlet />
       </main>
     </div>

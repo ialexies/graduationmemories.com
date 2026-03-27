@@ -44,3 +44,11 @@ npm run dev          # Vite on port 5173
 
 - [CMS User Guide](docs/CMS_GUIDE.md) — How to use the admin interface
 - [Deployment](DEPLOY.md) — Docker and manual deployment
+- [V2 Overview](docs/V2_OVERVIEW.md) — General-purpose CMS direction and scope
+- [V2 Master Spec](docs/V2_MASTER_SPEC.md) — Consolidated V2 architecture, API, migration, and rollout plan
+- [V2 Architecture](docs/V2_ARCHITECTURE.md) — Parallel V2 architecture and block renderer model
+- [V2 Data Model](docs/V2_DATA_MODEL.md) — Proposed V2 schema and block contracts
+- [V2 Content Model](docs/V2_CONTENT_MODEL.md) — Neutral labels and reusable content semantics
+- [V2 API Spec](docs/V2_API_SPEC.md) — Draft/publish and migration API contracts
+- [V2 Migration Guide](docs/V2_MIGRATION.md) — Legacy mapping and migration safety process
+- [V2 Implementation Plan](docs/V2_IMPLEMENTATION_PLAN.md) — Day-by-day execution checklist

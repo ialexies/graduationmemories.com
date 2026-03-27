@@ -9,6 +9,7 @@ Guide for admins and editors using the Graduation Memories CMS. The app supports
 - **Visible sections** — Toggle class photo, gallery, message block, people list
 - **Image upload** — Upload photos directly (no paths to type)
 - **Custom labels** — Override default labels per page
+- **V2 builder (beta)** — Block-based editor with draggable sections and responsive preview widths
 
 ## Login
 
@@ -37,6 +38,45 @@ Editors only see pages that an admin has assigned to them.
 ### Backup (admins only)
 
 Open **Backup** in the navigation to download a ZIP of all data and uploads, or export a single page. To restore: upload the ZIP. **Full site restore** requires typing `RESTORE` in the confirmation field and replaces everything—log in again afterward. **Page backup** restores merge one page only. Keep ZIP files private (passwords and tokens inside).
+
+---
+
+## V2 Builder (beta)
+
+Use this for general-purpose pages with reusable sections.
+
+### Open V2 pages
+
+1. Go to **V2 Pages** in the admin navigation
+2. Click **Create V2 Page** (enter slug + title)
+3. Click **Edit** on a V2 page
+
+### In the V2 editor
+
+- **Blocks panel** (left)
+  - Add block types (Header, Rich text, People list, Image grid, CTA, Footer)
+  - Drag blocks to reorder
+- **Preview canvas** (center)
+  - Device-style toolbar: Desktop, Tablet, Mobile, Custom
+  - Width input (px) for precise preview size
+  - Drag-resize handle on the right edge of canvas
+  - Ruler scale above preview reflects current selected width
+- **Inspector panel** (right)
+  - Edit selected block JSON props
+  - Toggle visibility
+  - Move up/down
+  - Remove block
+
+### Save and publish
+
+1. Click **Save Draft** to create a new draft version
+2. Click **Publish** to make latest draft public
+3. Open **Open public** or visit `/v2/{slug}`
+
+### Legacy migration preview into V2
+
+- In V2 editor, click **Import Legacy Preview**
+- It maps existing legacy page data into V2 blocks (read-only preview import until you save)
 
 ---
 

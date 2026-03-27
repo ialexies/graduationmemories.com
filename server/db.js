@@ -83,6 +83,43 @@ export function initDb() {
       tagline TEXT NOT NULL,
       location TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS v2_pages (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      theme_id TEXT,
+      created_by INTEGER,
+      published_version_id TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      published_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS v2_page_versions (
+      id TEXT PRIMARY KEY,
+      page_id TEXT NOT NULL REFERENCES v2_pages(id),
+      version_no INTEGER NOT NULL,
+      content_json TEXT NOT NULL,
+      created_by INTEGER,
+      is_published INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS v2_themes (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      tokens_json TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS v2_page_assignments (
+      user_id INTEGER NOT NULL,
+      page_id TEXT NOT NULL REFERENCES v2_pages(id),
+      PRIMARY KEY (user_id, page_id)
+    );
   `);
 
   // Migration: add type column to pages if missing (existing DBs)
@@ -114,6 +151,10 @@ export function initDb() {
   if (transcriptCols.length === 0) {
     db.exec('ALTER TABLE posts_content ADD COLUMN teacher_audio_transcript TEXT');
   }
+
+  db.exec('CREATE INDEX IF NOT EXISTS idx_v2_pages_slug ON v2_pages(slug)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_v2_versions_page_version ON v2_page_versions(page_id, version_no DESC)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_v2_versions_page_created ON v2_page_versions(page_id, created_at DESC)');
 }
 
 export function seedDb() {

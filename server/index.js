@@ -14,6 +14,19 @@ import { streamBackupZip, importBackupFromBuffer } from './backup.js';
 import { authMiddleware, signToken, requireAdmin, requirePageAccess } from './middleware/auth.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import {
+  ensureV2Defaults,
+  listV2PagesForUser,
+  createV2Page,
+  getV2PageById,
+  saveV2Draft,
+  publishV2Latest,
+  getV2PublicBySlug,
+  previewLegacyToV2,
+  assignV2PageToUser,
+  canAccessV2Page,
+  canAccessLegacySourceForMigration,
+} from './v2.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -45,6 +58,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 initDb();
 seedDb();
+ensureV2Defaults();
 
 app.get('/api/pages/:id', (req, res) => {
   const { id } = req.params;
@@ -93,6 +107,137 @@ app.post('/api/admin/login', loginLimiter, (req, res) => {
 });
 
 app.use('/api/admin', authMiddleware);
+
+app.get('/api/v2/public/:slug', (req, res) => {
+  const data = getV2PublicBySlug(req.params.slug);
+  if (!data) return res.status(404).json({ error: 'Published page not found' });
+  res.json(data);
+});
+
+app.use('/api/v2', authMiddleware);
+
+app.get('/api/v2/pages', (req, res) => {
+  const pages = listV2PagesForUser(req.user.id, req.user.role);
+  res.json({ pages });
+});
+
+app.post('/api/v2/pages', (req, res) => {
+  try {
+    const { slug, title, themeId, assignUserIds } = req.body || {};
+    if (!slug || typeof slug !== 'string' || !/^[a-z0-9-]{3,64}$/.test(slug.trim().toLowerCase())) {
+      return res.status(400).json({ error: 'slug must be 3-64 chars: lowercase letters, numbers, hyphens' });
+    }
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ error: 'title is required' });
+    }
+    const page = createV2Page({ slug, title, themeId }, req.user);
+    if (req.user.role === 'admin' && Array.isArray(assignUserIds)) {
+      for (const uid of assignUserIds) {
+        const parsed = Number(uid);
+        if (Number.isInteger(parsed) && parsed > 0) assignV2PageToUser(page.page.id, parsed);
+      }
+    }
+    res.status(201).json(page);
+  } catch (err) {
+    if (String(err?.message || '').toLowerCase().includes('unique')) {
+      return res.status(400).json({ error: 'Slug already exists' });
+    }
+    console.error('POST /api/v2/pages error:', err);
+    res.status(500).json({ error: err.message || 'Failed to create V2 page' });
+  }
+});
+
+app.get('/api/v2/pages/:id', (req, res) => {
+  const data = getV2PageById(req.params.id, req.user);
+  if (!data) return res.status(404).json({ error: 'V2 page not found' });
+  res.json(data);
+});
+
+app.put('/api/v2/pages/:id/draft', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const out = saveV2Draft(req.params.id, req.body, req.user);
+    if (!out) return res.status(404).json({ error: 'V2 page not found' });
+    res.json({ ok: true, pageId: req.params.id, versionNo: out.versionNo, savedAt: out.savedAt });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to save draft', code: 'VALIDATION_ERROR' });
+  }
+});
+
+app.post('/api/v2/pages/:id/publish', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const out = publishV2Latest(req.params.id, req.user);
+    if (!out) return res.status(404).json({ error: 'V2 page not found' });
+    res.json({ ok: true, pageId: req.params.id, ...out });
+  } catch (err) {
+    const msg = err.message || 'Failed to publish';
+    const status = msg.includes('Admin access required') ? 403 : 400;
+    res.status(status).json({ error: msg });
+  }
+});
+
+app.post('/api/v2/pages/:id/blocks', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const current = getV2PageById(req.params.id, req.user);
+    if (!current?.latestDraft?.content) return res.status(404).json({ error: 'Draft not found' });
+    const block = req.body;
+    if (!block?.id || !block?.type) return res.status(400).json({ error: 'block.id and block.type are required' });
+    const next = { ...current.latestDraft.content, blocks: [...(current.latestDraft.content.blocks || []), block] };
+    const out = saveV2Draft(req.params.id, next, req.user);
+    res.status(201).json({ ok: true, pageId: req.params.id, versionNo: out.versionNo });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to add block' });
+  }
+});
+
+app.patch('/api/v2/pages/:id/blocks/:blockId', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const current = getV2PageById(req.params.id, req.user);
+    if (!current?.latestDraft?.content) return res.status(404).json({ error: 'Draft not found' });
+    const blocks = (current.latestDraft.content.blocks || []).map((b) =>
+      b.id === req.params.blockId ? { ...b, ...req.body, props: { ...(b.props || {}), ...(req.body?.props || {}) } } : b
+    );
+    const out = saveV2Draft(req.params.id, { ...current.latestDraft.content, blocks }, req.user);
+    res.json({ ok: true, pageId: req.params.id, versionNo: out.versionNo });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to update block' });
+  }
+});
+
+app.delete('/api/v2/pages/:id/blocks/:blockId', (req, res) => {
+  try {
+    if (!canAccessV2Page(req.user, req.params.id)) {
+      return res.status(403).json({ error: 'Access denied to this V2 page' });
+    }
+    const current = getV2PageById(req.params.id, req.user);
+    if (!current?.latestDraft?.content) return res.status(404).json({ error: 'Draft not found' });
+    const blocks = (current.latestDraft.content.blocks || []).filter((b) => b.id !== req.params.blockId);
+    const out = saveV2Draft(req.params.id, { ...current.latestDraft.content, blocks }, req.user);
+    res.json({ ok: true, pageId: req.params.id, versionNo: out.versionNo });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Failed to delete block' });
+  }
+});
+
+app.post('/api/v2/migration/preview/:legacyPageId', (req, res) => {
+  if (!canAccessLegacySourceForMigration(req.user, req.params.legacyPageId)) {
+    return res.status(403).json({ error: 'Access denied to legacy source page' });
+  }
+  const result = previewLegacyToV2(req.params.legacyPageId);
+  if (!result) return res.status(404).json({ error: 'Legacy page not found' });
+  res.json({ ok: true, sourcePageId: req.params.legacyPageId, result });
+});
 
 app.get('/api/admin/pages', (req, res) => {
   try {

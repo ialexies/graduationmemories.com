@@ -19,6 +19,9 @@ import { FooterEditorPage } from './pages/admin/FooterEditorPage';
 import { AdminTokensPage } from './pages/admin/AdminTokensPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { BackupPage } from './pages/admin/BackupPage';
+import { V2PagesPage } from './pages/admin/V2PagesPage';
+import { V2PageEditor } from './pages/admin/V2PageEditor';
+import { V2PublicPage } from './pages/V2PublicPage';
 
 const TOKEN_STORAGE_PREFIX = 'gm_token_';
 
@@ -58,6 +61,7 @@ function App() {
             <Routes>
               <Route path="/" element={<RootRoute />} />
               <Route path="/:id" element={<PostRoute />} />
+              <Route path="/v2/:slug" element={<V2PublicPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/admin" element={<AdminProtectedRoute />}>
                 <Route element={<AdminLayout />}>
@@ -69,6 +73,8 @@ function App() {
                   <Route path="tokens" element={<RequireAdmin><AdminTokensPage /></RequireAdmin>} />
                   <Route path="users" element={<RequireAdmin><AdminUsersPage /></RequireAdmin>} />
                   <Route path="backup" element={<RequireAdmin><BackupPage /></RequireAdmin>} />
+                  <Route path="v2/pages" element={<V2PagesPage />} />
+                  <Route path="v2/pages/:id" element={<V2PageEditor />} />
                 </Route>
               </Route>
             </Routes>
