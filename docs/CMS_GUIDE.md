@@ -67,6 +67,7 @@ Use this for general-purpose pages with reusable sections.
   - Two tabs: **This block** and **Page settings**
   - Friendly form fields for SEO and page labels (JSON is optional under Advanced)
   - Rich text editor uses toolbar controls (not raw HTML)
+  - Header block includes style pack controls (background type/preset/image + overlay, height, corner radius, title/subtitle sizing, text color mode)
   - Image blocks include upload + builder-style layout controls
   - Toggle visibility
   - Move up/down

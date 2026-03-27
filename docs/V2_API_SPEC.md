@@ -234,4 +234,5 @@ Authenticated export of page row plus latest draft and published snapshots (JSON
   - click-to-select block from preview into inspector
   - image upload support in V2 inspector via existing legacy endpoint `POST /api/admin/pages/:id/upload`
   - image block builder props persisted in block `props` (layout/style/caption/focal/loading presets)
+  - header style pack props persisted in block `props` (background type/preset/image/overlay, height, radius, title/subtitle size, text color mode)
   - block removal action in inspector (left-list quick delete action is planned)

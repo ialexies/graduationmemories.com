@@ -35,6 +35,13 @@ export type ImageBorder = 'none' | 'thin';
 export type ImageShadow = 'none' | 'sm' | 'md' | 'lg';
 export type ImageFocalPoint = 'center' | 'top' | 'bottom' | 'left' | 'right';
 export type ImageLoading = 'lazy' | 'eager';
+export type HeaderBgType = 'gradient' | 'solid' | 'image';
+export type HeaderBgPreset = 'ocean' | 'royal' | 'sunset' | 'forest' | 'slate' | 'snow';
+export type HeaderHeightPreset = 'sm' | 'md' | 'lg' | 'screen';
+export type HeaderRadiusPreset = 'none' | 'sm' | 'md' | 'lg' | 'pill';
+export type HeaderTitleSize = 'sm' | 'md' | 'lg' | 'xl';
+export type HeaderSubtitleSize = 'sm' | 'md' | 'lg';
+export type HeaderTextColorMode = 'auto' | 'light' | 'dark';
 
 export function alignClass(t: unknown): string {
   if (t === 'center') return 'text-center';
@@ -108,4 +115,60 @@ export function imageFocalPointClass(v: unknown): string {
 
 export function imageLoadingValue(v: unknown): 'lazy' | 'eager' {
   return v === 'eager' ? 'eager' : 'lazy';
+}
+
+export function headerGradientClass(v: unknown): string {
+  if (v === 'sunset') return 'bg-gradient-to-r from-rose-500 to-orange-400';
+  if (v === 'forest') return 'bg-gradient-to-r from-emerald-600 to-green-500';
+  if (v === 'slate') return 'bg-gradient-to-r from-slate-700 to-slate-500';
+  if (v === 'snow') return 'bg-gradient-to-r from-slate-100 to-slate-50';
+  if (v === 'ocean') return 'bg-gradient-to-r from-cyan-600 to-blue-500';
+  return 'bg-gradient-to-r from-blue-600 to-indigo-600';
+}
+
+export function headerSolidClass(v: unknown): string {
+  if (v === 'sunset') return 'bg-orange-500';
+  if (v === 'forest') return 'bg-emerald-600';
+  if (v === 'slate') return 'bg-slate-700';
+  if (v === 'snow') return 'bg-slate-100';
+  if (v === 'ocean') return 'bg-cyan-600';
+  return 'bg-blue-600';
+}
+
+export function headerHeightClass(v: unknown): string {
+  if (v === 'sm') return 'min-h-[220px]';
+  if (v === 'lg') return 'min-h-[420px]';
+  if (v === 'screen') return 'min-h-[70vh]';
+  return 'min-h-[320px]';
+}
+
+export function headerRadiusClass(v: unknown): string {
+  if (v === 'none') return 'rounded-none';
+  if (v === 'sm') return 'rounded';
+  if (v === 'md') return 'rounded-lg';
+  if (v === 'pill') return 'rounded-[40px]';
+  return 'rounded-2xl';
+}
+
+export function headerTitleSizeClass(v: unknown): string {
+  if (v === 'sm') return 'text-2xl';
+  if (v === 'md') return 'text-3xl';
+  if (v === 'xl') return 'text-5xl';
+  return 'text-4xl';
+}
+
+export function headerSubtitleSizeClass(v: unknown): string {
+  if (v === 'sm') return 'text-sm';
+  if (v === 'lg') return 'text-xl';
+  return 'text-base';
+}
+
+export function headerTextColorClass(mode: unknown, bgType: unknown, preset: unknown): string {
+  if (mode === 'light') return 'text-white';
+  if (mode === 'dark') return 'text-slate-900';
+  if (bgType === 'solid' || bgType === 'gradient') {
+    if (preset === 'snow') return 'text-slate-900';
+    return 'text-white';
+  }
+  return 'text-white';
 }

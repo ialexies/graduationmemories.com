@@ -4,6 +4,13 @@ import {
   alignClass,
   contentSizeClass,
   fontPresetClass,
+  headerGradientClass,
+  headerHeightClass,
+  headerRadiusClass,
+  headerSolidClass,
+  headerSubtitleSizeClass,
+  headerTextColorClass,
+  headerTitleSizeClass,
   imageAlignClass,
   imageBorderClass,
   imageFitClass,
@@ -42,16 +49,32 @@ function HeaderBlock({ props }: BlockRenderProps) {
   const subtitle = text(props.subtitle);
   const left = text(props.metaLeft);
   const right = text(props.metaRight);
+  const bgType = props.bgType;
+  const bgPreset = props.bgPreset;
+  const bgImage = text(props.bgImage);
+  const bgOverlay = typeof props.bgOverlay === 'number' ? Math.max(0, Math.min(70, props.bgOverlay)) : 35;
+  const bgClass = bgType === 'solid' ? headerSolidClass(bgPreset) : headerGradientClass(bgPreset);
+  const textColorClass = headerTextColorClass(props.textColorMode, bgType, bgPreset);
+  const titleSizeClass = headerTitleSizeClass(props.titleSize);
+  const subtitleSizeClass = headerSubtitleSizeClass(props.subtitleSize);
+  const radiusClass = headerRadiusClass(props.radiusPreset);
+  const heightClass = headerHeightClass(props.heightPreset);
   return (
-    <section className={`rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8 shadow ${layoutWrap(props, '')}`}>
-      <h1 className="text-3xl font-bold whitespace-pre-line">{title}</h1>
-      {subtitle && <p className="mt-2 opacity-90 whitespace-pre-line">{subtitle}</p>}
-      {(left || right) && (
-        <div className="mt-4 flex flex-wrap gap-4 text-sm opacity-90">
-          {left && <span className="whitespace-pre-line">{left}</span>}
-          {right && <span className="whitespace-pre-line">{right}</span>}
-        </div>
-      )}
+    <section
+      className={`${radiusClass} ${heightClass} p-8 shadow overflow-hidden relative ${bgType === 'image' && bgImage ? '' : bgClass} ${textColorClass} ${layoutWrap(props, '')}`}
+      style={bgType === 'image' && bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+    >
+      {bgType === 'image' && bgImage && <div className="absolute inset-0 bg-slate-900" style={{ opacity: bgOverlay / 100 }} />}
+      <div className="relative z-10">
+        <h1 className={`${titleSizeClass} font-bold whitespace-pre-line`}>{title}</h1>
+        {subtitle && <p className={`mt-2 opacity-90 whitespace-pre-line ${subtitleSizeClass}`}>{subtitle}</p>}
+        {(left || right) && (
+          <div className="mt-4 flex flex-wrap gap-4 text-sm opacity-90">
+            {left && <span className="whitespace-pre-line">{left}</span>}
+            {right && <span className="whitespace-pre-line">{right}</span>}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

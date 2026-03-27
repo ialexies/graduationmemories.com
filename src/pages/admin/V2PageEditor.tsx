@@ -25,7 +25,23 @@ const BLOCK_OPTIONS: { type: V2Block['type']; label: string }[] = [
 function defaultProps(type: V2Block['type']): Record<string, unknown> {
   switch (type) {
     case 'header':
-      return { title: 'New Header', subtitle: '', metaLeft: '', metaRight: '', textAlign: 'left', fontPreset: 'default' };
+      return {
+        title: 'New Header',
+        subtitle: '',
+        metaLeft: '',
+        metaRight: '',
+        textAlign: 'left',
+        fontPreset: 'default',
+        bgType: 'gradient',
+        bgPreset: 'royal',
+        bgImage: '',
+        bgOverlay: 35,
+        heightPreset: 'md',
+        radiusPreset: 'lg',
+        titleSize: 'md',
+        subtitleSize: 'md',
+        textColorMode: 'auto',
+      };
     case 'richText':
       return { content: '<p>Write content...</p>', textAlign: 'left', fontPreset: 'default', contentSize: 'md' };
     case 'peopleList':

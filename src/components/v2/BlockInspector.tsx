@@ -4,6 +4,13 @@ import {
   V2_BLOCK_TYPE_LABELS,
   type ContentSize,
   type FontPreset,
+  type HeaderBgPreset,
+  type HeaderBgType,
+  type HeaderHeightPreset,
+  type HeaderRadiusPreset,
+  type HeaderSubtitleSize,
+  type HeaderTextColorMode,
+  type HeaderTitleSize,
   type ImageAlign,
   type ImageBorder,
   type ImageFit,
@@ -189,6 +196,55 @@ const IMAGE_LOADING: { value: ImageLoading; label: string }[] = [
   { value: 'eager', label: 'Eager (load immediately)' },
 ];
 
+const HEADER_BG_TYPES: { value: HeaderBgType; label: string }[] = [
+  { value: 'gradient', label: 'Gradient' },
+  { value: 'solid', label: 'Solid color' },
+  { value: 'image', label: 'Image' },
+];
+
+const HEADER_BG_PRESETS: { value: HeaderBgPreset; label: string }[] = [
+  { value: 'royal', label: 'Royal blue' },
+  { value: 'ocean', label: 'Ocean' },
+  { value: 'sunset', label: 'Sunset' },
+  { value: 'forest', label: 'Forest' },
+  { value: 'slate', label: 'Slate' },
+  { value: 'snow', label: 'Snow light' },
+];
+
+const HEADER_HEIGHTS: { value: HeaderHeightPreset; label: string }[] = [
+  { value: 'sm', label: 'Small' },
+  { value: 'md', label: 'Medium' },
+  { value: 'lg', label: 'Large' },
+  { value: 'screen', label: 'Full screen' },
+];
+
+const HEADER_RADII: { value: HeaderRadiusPreset; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: 'sm', label: 'Small' },
+  { value: 'md', label: 'Medium' },
+  { value: 'lg', label: 'Large' },
+  { value: 'pill', label: 'Pill' },
+];
+
+const HEADER_TITLE_SIZES: { value: HeaderTitleSize; label: string }[] = [
+  { value: 'sm', label: 'Small' },
+  { value: 'md', label: 'Medium' },
+  { value: 'lg', label: 'Large' },
+  { value: 'xl', label: 'Extra large' },
+];
+
+const HEADER_SUBTITLE_SIZES: { value: HeaderSubtitleSize; label: string }[] = [
+  { value: 'sm', label: 'Small' },
+  { value: 'md', label: 'Normal' },
+  { value: 'lg', label: 'Large' },
+];
+
+const HEADER_TEXT_MODES: { value: HeaderTextColorMode; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'light', label: 'Light text' },
+  { value: 'dark', label: 'Dark text' },
+];
+
 function BlockLayoutFields({
   props,
   onChange,
@@ -257,10 +313,177 @@ function BlockLayoutFields({
   );
 }
 
-function HeaderFields({ props, onChange }: { props: Record<string, unknown>; onChange: (p: Record<string, unknown>) => void }) {
+function HeaderFields({
+  props,
+  onChange,
+  pageId,
+}: {
+  props: Record<string, unknown>;
+  onChange: (p: Record<string, unknown>) => void;
+  pageId?: string;
+}) {
+  const bgType = (props.bgType as HeaderBgType) || 'gradient';
+  const bgPreset = (props.bgPreset as HeaderBgPreset) || 'royal';
+  const heightPreset = (props.heightPreset as HeaderHeightPreset) || 'md';
+  const radiusPreset = (props.radiusPreset as HeaderRadiusPreset) || 'lg';
+  const titleSize = (props.titleSize as HeaderTitleSize) || 'md';
+  const subtitleSize = (props.subtitleSize as HeaderSubtitleSize) || 'md';
+  const textColorMode = (props.textColorMode as HeaderTextColorMode) || 'auto';
+  const bgOverlay = typeof props.bgOverlay === 'number' ? Math.max(0, Math.min(70, props.bgOverlay)) : 35;
   return (
-    <div className="space-y-2">
-      <BlockLayoutFields props={props} onChange={onChange} showFont />
+    <div className="space-y-3">
+      <div className="space-y-2 border border-slate-200 rounded-lg p-2">
+        <p className="text-xs font-medium text-slate-700">Background</p>
+        <label className="block text-[11px] text-slate-500">Background type</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={bgType}
+          onChange={(e) => onChange({ ...props, bgType: e.target.value as HeaderBgType })}
+          aria-label="Header background type"
+        >
+          {HEADER_BG_TYPES.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Preset</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={bgPreset}
+          onChange={(e) => onChange({ ...props, bgPreset: e.target.value as HeaderBgPreset })}
+          aria-label="Header background preset"
+        >
+          {HEADER_BG_PRESETS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        {bgType === 'image' && (
+          <>
+            <p className="text-[11px] text-slate-500">Upload a background image or paste a link.</p>
+            <ImageUploadButton pageId={pageId} text="Upload background image" onUploaded={(paths) => onChange({ ...props, bgImage: paths[0] || '' })} />
+            <label className="block text-[11px] text-slate-500">Background image URL</label>
+            <input
+              className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg font-mono"
+              value={str(props.bgImage)}
+              onChange={(e) => onChange({ ...props, bgImage: e.target.value })}
+              aria-label="Header background image URL"
+            />
+            <label className="block text-[11px] text-slate-500">Overlay darkness ({bgOverlay}%)</label>
+            <input
+              type="range"
+              min={0}
+              max={70}
+              step={5}
+              value={bgOverlay}
+              onChange={(e) => onChange({ ...props, bgOverlay: Number(e.target.value) })}
+              aria-label="Header background overlay strength"
+            />
+          </>
+        )}
+      </div>
+
+      <div className="space-y-2 border border-slate-200 rounded-lg p-2">
+        <p className="text-xs font-medium text-slate-700">Height and shape</p>
+        <label className="block text-[11px] text-slate-500">Height</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={heightPreset}
+          onChange={(e) => onChange({ ...props, heightPreset: e.target.value as HeaderHeightPreset })}
+          aria-label="Header height preset"
+        >
+          {HEADER_HEIGHTS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Corner radius</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={radiusPreset}
+          onChange={(e) => onChange({ ...props, radiusPreset: e.target.value as HeaderRadiusPreset })}
+          aria-label="Header corner radius"
+        >
+          {HEADER_RADII.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-2 border border-slate-200 rounded-lg p-2">
+        <p className="text-xs font-medium text-slate-700">Text style</p>
+        <label className="block text-[11px] text-slate-500">Text alignment</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={(props.textAlign as TextAlign) || 'left'}
+          onChange={(e) => onChange({ ...props, textAlign: e.target.value as TextAlign })}
+          aria-label="Header text alignment"
+        >
+          {ALIGNS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Font style</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={(props.fontPreset as FontPreset) || 'default'}
+          onChange={(e) => onChange({ ...props, fontPreset: e.target.value as FontPreset })}
+          aria-label="Header font style"
+        >
+          {FONTS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Title size</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={titleSize}
+          onChange={(e) => onChange({ ...props, titleSize: e.target.value as HeaderTitleSize })}
+          aria-label="Header title size"
+        >
+          {HEADER_TITLE_SIZES.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Subtitle size</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={subtitleSize}
+          onChange={(e) => onChange({ ...props, subtitleSize: e.target.value as HeaderSubtitleSize })}
+          aria-label="Header subtitle size"
+        >
+          {HEADER_SUBTITLE_SIZES.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <label className="block text-[11px] text-slate-500">Text color mode</label>
+        <select
+          className="w-full text-sm px-2 py-1.5 border border-slate-300 rounded-lg"
+          value={textColorMode}
+          onChange={(e) => onChange({ ...props, textColorMode: e.target.value as HeaderTextColorMode })}
+          aria-label="Header text color mode"
+        >
+          {HEADER_TEXT_MODES.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <label className="block text-xs font-medium text-slate-600">Main title</label>
       <textarea
         className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-sm"
@@ -763,7 +986,7 @@ function TypeFields({
   const props = block.props || {};
   switch (block.type) {
     case 'header':
-      return <HeaderFields props={props} onChange={onChangeProps} />;
+      return <HeaderFields props={props} onChange={onChangeProps} pageId={pageId} />;
     case 'richText':
       return <RichTextFields blockId={block.id} props={props} onChange={onChangeProps} />;
     case 'peopleList':
